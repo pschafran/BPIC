@@ -5,7 +5,7 @@ import os
 import glob
 import subprocess
 import shutil
-from BPIC.assets.setup import *
+import BPIC.assets.setup
 from multiprocessing import Pool
 from Bio import SeqIO
 from collections import Counter
@@ -46,9 +46,28 @@ Advanced:
 ### MAIN ###
 
 if __name__ == "__main__":
+	# Check inputs
 	parameterDict = BPIC.assets.setup.checkArgs(sys.argv)
 	globals().update(parameterDict)
 	logOutput(parameterDict)
 	logOutput("Parameter checking passed.\n------------------------")
 	checkDependencies(aligner, mrBayesPath, mafftPath, clustalPath, galaxPath)
-	checkFastas(inputDir,fileFormat)
+	fileList = [ file for file in glob.glob("%s/*" % inputDir) if os.path.isfile(file) ]
+	locusList = checkFastas(inputDir,fileFormat)
+
+	# Set up files for alignment
+	os.mkdir("%s/sequence_files" %(outputDir))
+	if fileFormat == "locus":
+		for file in fileList:
+			shutil.copy(file,"%s/sequence_files/" %(outputDir),follow_symlinks=True)
+	elif fileFormat == "taxon":
+		for file in filelist:
+			taxon = file.split(".")[-1:].join(".")
+			record_dict = SeqIO.to_dict(SeqIO.parse("%s/%s" %(inputDir,file), "fasta"))
+			for record in record_dict:
+				with open("%s/%s.fasta" % (outputDir, record), "a+") as outSeqFile:
+					sequence = record_dict[record]
+					outSeqFile.write(">%s\n%s\n" % (taxon,sequence))
+
+	# Align files
+	
