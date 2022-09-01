@@ -1,36 +1,73 @@
 # Setup functions
+import os
+import shutil
+import glob
+from Bio import SeqIO
+
 
 def checkArgs(commandline):
+	cite = '''
+By: Peter W. Schafran
+Last Updated: 2022 August 28
+https://github.com/pschafran/BPIC
+	'''
+	version = "0.1"
+
+	help = '''
+Required parameters:
+-i, --input	Directory containing FASTA files
+-f, --format	Input file format (either locus or taxon)
+
+Optional parameters:
+-a, --aligner	Alignment software (either mafft or clustal; default: mafft)
+--force Force overwrite existing results
+-l, --log	Log file name. File includes more details than screen output (default: printed to screen)
+-o, --output	Output directory name (default: output)
+-t, --threads	Maximum number of threads to use (default: 1)
+
+Help:
+-c, --cite	Show citation information
+-h, --help	Show this help menu
+-v, --version	Show version number
+
+Advanced:
+--mrbayes-path	Path to Mr Bayes executable
+--mafft-path	Path to MAFFT executable
+--clustal-path	Path to Clustal executable
+--galax-path	Path to Galax executable
+	'''
+
 	acceptedParameters = ["-i","--input","-f","--format","-a","--aligner","-t","--threads","-o","--output","--force","-h","--help","-v","--version","-c","--cite","--mrbayes-path","--mafft-path","--clustal-path","--galax-path"]
 
 	# Set default parameters
 	aligner = "mafft"
-	outpurDir = "output"
+	outputDir = "output"
 	threads = 1
-	forceOverwrite = FALSE
+	forceOverwrite = False
+	log = False
 	logFile = "null"
 	mrBayesPath = ""
 	mafftPath = ""
 	clustalPath = ""
 	galaxPath = ""
 
-	if "-h" or "--help" in commandline:
+	if "-h" in commandline or "--help" in commandline:
 		print(help)
 		exit(0)
-	if "-v" or "--version" in commandline:
+	if "-v" in commandline or "--version" in commandline:
 		print(version)
 		exit(0)
-	if "-c" or "--cite" in commandline:
+	if "-c" in commandline or "--cite" in commandline:
 		print(cite)
 		exit(0)
-	if "-i" or "--input" not in commandline:
+	if "-i" not in commandline and "--input" not in commandline:
 		print("ERROR: No input directory specified.")
 		exit(1)
-	if "-f" or "--format" not in commandline:
+	if "-f" not in commandline and "--format" not in commandline:
 		print("ERROR: Input file format not specified.")
 		exit(1)
 	if "--force" in commandline:
-		forceOverwrite = TRUE
+		forceOverwrite = True
 	i = 0
 	for parameter in commandline[i:]:
 		if parameter in ["-i","--input"]:
@@ -49,13 +86,15 @@ def checkArgs(commandline):
 				print("ERROR: Aligner must be 'mafft' or 'clustal'.")
 				exit(1)
 		if parameter in ["-l","--log"]:
-			log = TRUE
+			log = True
 			logFile = commandline[i+1]
 		if parameter in ["-o","--output"]:
 			outputDir = commandline[i+1]
-			if os.path.isdir(outputDir) and forceOverwrite == FALSE:
+			if os.path.isdir(outputDir) and forceOverwrite == False:
 				print("ERROR: Output directory already exists. Delete directory or set --force to overwrite.")
 				exit(1)
+			elif os.path.isdir(outputDir) and forceOverwrite == True:
+				shutil.rmtree(outputDir)
 		if parameter in ["-t","--threads"]:
 			threads = int(commandline[i+1])
 		if parameter == "--mrbayes-path":
@@ -66,95 +105,152 @@ def checkArgs(commandline):
 			clustalPath = commandline[i+1]
 		if parameter == "--galax-path":
 			galaxPath = commandline[i+1]
+		# Replace base logFile name with outputDir + logFile after whole command line is read
+		if log == True:
+			logFile = "%s/%s" %(outputDir,logFile)
 		i += 1
 	parameterDict = {"inputDir" : inputDir, "fileFormat" : fileFormat, "aligner" : aligner, "forceOverwrite" : forceOverwrite, "log" : log, "logFile" : logFile, "outputDir" : outputDir, "threads" : threads, "mrBayesPath" : mrBayesPath, "mafftPath" : mafftPath, "clustalPath" : clustalPath, "galaxPath" : galaxPath}
 	return parameterDict
 
-def checkDependencies(aligner,mrBayes,mafft,clustal,galax):
-	try:
-		mrBayesPath = shutil.which(mrbayes)
-	except:
-		mrBayesPath = shutil.which("mrbayes")
-	else:
-		print("ERROR: MrBayes could not be executed.")
-	logOutput(mrBayesPath)
-	try:
-		galaxPath = shutil.which(galax)
-	except:
-		galaxPath = shutil.which("galax")
-	else:
-		print("ERROR: Galax could not be executed.")
-	logOutput(galaxPath)
-	if aligner == "mafft":
-		try:
-			mafftPath = shutil.which(mafft)
-		except:
-			mafftPath = shutil.which("mafft")
-		else:
-			print("ERROR: MAFFT could not be executed.")
-		logOutput(mafftPath)
-	elif aligner == "clustal":
-		try:
-			clustalPath = shutil.which(clustal)
-		except:
-			clustalPath = shutil.which("clustalo")
-		else:
-			print("ERROR: Clustal Omega could not be executed.")
-		logOutput(clustalPath)
+def checkDependencies(aligner, mrBayes, mafft, clustal, galax, dependencyDir, log = False, logFile = "null"):
+	mrBayesPath = shutil.which(mrBayes)
+	if mrBayesPath == None:
+		mrBayesPath = shutil.which("mb")
+	if mrBayesPath == None:
+		mrBayesPath = shutil.which("%s/mb" % dependencyDir)
+	if mrBayesPath == None:
+		logOutput(log, logFile, "ERROR: MrBayes could not be found.")
+		exit(1)
+	logOutput(log, logFile, mrBayesPath)
 
-def checkFastas(inputDir, fileFormat):
+	galaxPath = shutil.which(galax)
+	if galaxPath == None:
+		galaxPath = shutil.which("galax")
+	if galaxPath == None:
+		galaxPath = shutil.which("%s/galax" % dependencyDir)
+	if galaxPath == None:
+		logOutput(log, logFile, "ERROR: Galax could not be executed.")
+		exit(1)
+	logOutput(log, logFile, galaxPath)
+	if aligner == "mafft":
+		mafftPath = shutil.which(mafft)
+		if mafftPath == None:
+			mafftPath = shutil.which("mafft")
+		if mafftPath == None:
+			mafftPath = shutil.which("%s/mafft" % dependencyDir)
+		if mafftPath == None:
+			logOutput(log, logFile, "ERROR: MAFFT could not be executed.")
+			exit(1)
+		logOutput(log, logFile, mafftPath)
+		return mrBayesPath,galaxPath,mafftPath
+	elif aligner == "clustal":
+		clustalPath = shutil.which(clustal)
+		if clustalPath == None:
+			clustalPath = shutil.which("clustalo")
+		if clustalPath == None:
+			clustalPath = shutil.which("%s/clustalo" % dependencyDir)
+		if clustalPath == None:
+			logOutput(log, logFine, "ERROR: Clustal Omega could not be executed.")
+			exit(1)
+		logOutput(log, logFile, clustalPath)
+		return mrBayesPath,galaxPath,clustalPath
+
+def checkFastas(inputDir, fileFormat, log = False, logFile = "null"):
 	fileList = [ file for file in glob.glob("%s/*" % inputDir) if os.path.isfile(file) ]
 	sequenceDict = {}
 	agreementList = []
 	disagreementList = []
+	duplicateNameDict = {}
+	duplicateNames = False
 	if fileFormat == "taxon":
+		#Parse all files for sequence names, check for duplicates in each file
 		for file in fileList:
-			taxon = file.split(".")[-1:].join(".")
+			locusList = []
+			taxon = ".".join(file.split(".")[0:-1])
 			iterator = SeqIO.parse("%s/%s" %(inputDir,file), "fasta")
 			seqIDs = sorted([record.id for record in iterator])
+			for locus in seqIDs:
+				if locus in locusList:
+					duplicateNames = True
+					try:
+						duplicateNameDict[file].append(locus)
+					except:
+						duplicateNameDict.update({file : [locus]})
+				else:
+					locusList.append(locus)
 			sequenceDict.update({taxon : seqIDs})
+		# Report any duplicate sequence names found
+		if duplicateNames == True:
+			logOutput(log, logfile, "ERROR: Duplicate sequence names found.")
+			for name in duplicateNameDict:
+				logOutput(log, logFile, "%s:\t%s" %(name, duplicateNameDict[name]))
+			exit(1)
+		# Check that each file has the same sequence names
 		for taxon in sequenceDict:
 			for taxon2 in sequenceDict:
 				if sequenceDict[taxon] != sequenceDict[taxon2]:
 					disagreementList.append(taxon)
 				else:
 					agreementList.append(taxon)
+		# Report any files and sequence names that don't match others
 		if len(disagreementList) > 0:
-			logOutput("ERROR: At least one locus not present for every taxon. Offending names are:")
+			logOutput(log, logFile, "ERROR: At least one locus not present for every taxon. Offending names are:")
 			for taxon in sequenceDict:
 				for taxon2 in sequenceDict:
-					difference = sequenceDict[taxon].difference(sequenceDict[taxon2])
+					difference = set(sequenceDict[taxon]) - set(sequenceDict[taxon2])
 					if len(difference) > 0:
-						logOutput("%s sequences not in %s:\t%s" %(taxon, taxon2, difference))
+						logOutput(log, logFile, "%s sequences not in %s:\t%s" %(taxon, taxon2, difference))
 			exit(1)
 		else:
-			logOutput("Input file checking passed.\n------------------------")
+			locusList = sequenceDict[taxon]
+			logOutput(log, logFile, "Input file checking passed.\n------------------------")
 	elif fileFormat == "locus":
+		#Parse all files for sequence names, check for duplicates in each file
 		for file in fileList:
-			taxon = file.split(".")[-1:].join(".")
+			taxonList = []
+			locus = ".".join(file.split(".")[0:-1])
 			iterator = SeqIO.parse("%s/%s" %(inputDir,file), "fasta")
 			seqIDs = sorted([record.id for record in iterator])
-			sequenceDict.update({taxon : seqIDs})
-		for taxon in sequenceDict:
-			for taxon2 in sequenceDict:
-				if sequenceDict[taxon] != sequenceDict[taxon2]:
-					disagreementList.append(taxon)
+			sequenceDict.update({locus : seqIDs})
+			for taxon in seqIDs:
+				if taxon in taxonList:
+					duplicateNames = True
+					try:
+						duplicateNameDict[file].append(taxon)
+					except:
+						duplicateNameDict.update({file : [taxon]})
 				else:
-					agreementList.append(taxon)
+					taxonList.append(taxon)
+			sequenceDict.update({locus : seqIDs})
+		# Report any duplicate sequence names found
+		if duplicateNames == True:
+			logOutput(log, logfile, "ERROR: Duplicate sequence names found.")
+			for name in duplicateNameDict:
+				logOutput(log, logFile, "%s:\t%s" %(name, duplicateNameDict[name]))
+			exit(1)
+		#Check that each file has the same sequence names
+		for locus in sequenceDict:
+			for locus2 in sequenceDict:
+				if sequenceDict[locus] != sequenceDict[locus2]:
+					disagreementList.append(locus)
+				else:
+					agreementList.append(locus)
 		if len(disagreementList) > 0:
-			logOutput("ERROR: At least one taxon not present for every locus. Offending names are:")
-			for taxon in sequenceDict:
-				for taxon2 in sequenceDict:
-					difference = sequenceDict[taxon].difference(sequenceDict[taxon2])
+			logOutput(log, logFile, "ERROR: At least one taxon not present for every locus. Offending names are:")
+			for locus in sequenceDict:
+				for locus2 in sequenceDict:
+					difference = set(sequenceDict[locus]) - set(sequenceDict[locus2])
 					if len(difference) > 0:
-						logOutput("%s taxa not in %s:\t%s" %(taxon, taxon2, difference))
+						logOutput(log, logFile, "%s sequences not in %s:\t%s" %(locus, locus2, difference))
 			exit(1)
 		else:
-			logOutput("Input file checking passed.\n------------------------")
+			locusList = sequenceDict.keys()
+			logOutput(log, logFile, "Input file checking passed.\n------------------------")
+	return locusList
 
-def logOutput(logOutput):
-	if log == FALSE:
+def logOutput(log, logFile,logOutput):
+	if log == False:
 		print(logOutput)
-	elif log == TRUE:
-		with open(logFile, "a+") as openLogFile:
+	elif log == True:
+		with (logFile, "a+") as openLogFile:
 			openLogFile.write("%s\n" % logOutput)
