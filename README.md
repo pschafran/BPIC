@@ -3,15 +3,16 @@
 #### Dev Notes:
 * Only tested on macOS Monterey (12.4), zsh shell, Python 3.8.5
 * Locus-based file arrangement untested
-* 
+*
 
 
 ## Overview
 Script for batch processing of homologous loci for up to 12 taxa to calculate Bayesian phylogenetic information content in the data. Steps:
-0. Input data can be a FASTA file for each taxon containing one sequence for each locus, or a FASTA a file for each locus containing one sequence per taxon.
-1. Alignment (via MAFFT or Clustal Omega).
-2. Tree building (via Mr. Bayes)
-3. Analyze information content (via Galax)
+
+1. Input data can be a FASTA file for each taxon containing one sequence for each locus, or a FASTA a file for each locus containing one sequence per taxon.
+2. Alignment (via MAFFT or Clustal Omega).
+3. Tree building (via Mr. Bayes)
+4. Analyze information content (via Galax)
 
 ## Installation
 Clone github repo
@@ -33,9 +34,10 @@ ln -s $(which clustalo)
 ```
 If executables are not in the Terminal's `PATH`, you can link to the absolute path of the file:
 ```
+cd BPIC/dependencies
 ln -s /Users/peter/bin/galax-1.1.0-mac/galax1 galax
 ```
-Alternatively, paths can be provided on the command line:
+Alternatively, paths can be provided on the command line when the program is run:
 ```
 BPIC.py -i input_files -o output -f taxon --mafft-path /Users/peter/opt/miniconda3/bin/mafft --mrbayes-path /opt/homebrew/bin/mb
 ```
@@ -80,6 +82,41 @@ GCGATGCGCGATCGATGCTGGCTAGCTGCTAGTCATGCTGTAGCTAGTCGTGCA
 >Taxon 3
 CGATCGATCGTAGTGCTGATGCTGTAGTCGTGTAGCTAGCTGTAGTCAGTAGCT
 ```
+
+## Running
+Call the main script `BPIC.py` from command line. At minimum, you must specify the path to the directory containing all the input FASTA files and the format of the files (taxon or locus based as described above). Other parameters are:
+```
+Required parameters
+-i, --input	Directory containing FASTA files
+-f, --format	Input file format (either locus or taxon)
+
+Optional parameters
+-a, --aligner	Alignment software (either mafft or clustal; default: mafft)
+--force Force overwrite existing results
+-l, --log	Log file name. File includes more details than screen output (default: printed to screen)
+-o, --output	Output directory name (default: output)
+-t, --threads	Maximum number of threads to use (default: 1)
+
+MrBayes Parameters - values must be recognized by MrBayes (see https://nbisweden.github.io/MrBayes/manual.html)
+--mrbayes-nst	Substitution model
+--mrbayes-rates	Model for among-site rate variation
+--mrbayes-ngen	Number of cycles for MCMC
+--mrbayes-burninfrac	Proportion of samples to be discarded for convergence calculation (burn-in)
+--mrbayes-samplefreq	How often to sample the Markov chain
+--mrbayes-printfreq	How often to print information about the Markov chain
+
+Help
+-c, --cite	Show citation information
+-h, --help	Show this help menu
+-v, --version	Show version number
+
+Advanced
+--mrbayes-path	Path to Mr Bayes executable
+--mafft-path	Path to MAFFT executable
+--clustal-path	Path to Clustal executable
+--galax-path	Path to Galax executable
+```
+
 
 ## References
 

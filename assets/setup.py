@@ -14,28 +14,36 @@ https://github.com/pschafran/BPIC
 	version = "0.1"
 
 	help = '''
-Required parameters:
+Required parameters
 -i, --input	Directory containing FASTA files
 -f, --format	Input file format (either locus or taxon)
 
-Optional parameters:
+Optional parameters
 -a, --aligner	Alignment software (either mafft or clustal; default: mafft)
 --force Force overwrite existing results
 -l, --log	Log file name. File includes more details than screen output (default: printed to screen)
 -o, --output	Output directory name (default: output)
 -t, --threads	Maximum number of threads to use (default: 1)
 
-Help:
+MrBayes Parameters -v alues must be recognized by MrBayes (see https://nbisweden.github.io/MrBayes/manual.html)
+--mrbayes-nst	Substitution model
+--mrbayes-rates	Model for among-site rate variation
+--mrbayes-ngen	Number of cycles for MCMC
+--mrbayes-burninfrac	Proportion of samples to be discarded for convergence calculation (burn-in)
+--mrbayes-samplefreq	How often to sample the Markov chain
+--mrbayes-printfreq	How often to print information about the Markov chain
+
+Help
 -c, --cite	Show citation information
 -h, --help	Show this help menu
 -v, --version	Show version number
 
-Advanced:
+Advanced
 --mrbayes-path	Path to Mr Bayes executable
 --mafft-path	Path to MAFFT executable
 --clustal-path	Path to Clustal executable
 --galax-path	Path to Galax executable
-	'''
+'''
 
 	acceptedParameters = ["-i","--input","-f","--format","-a","--aligner","-t","--threads","-o","--output","--force","-h","--help","-v","--version","-c","--cite","--mrbayes-path","--mafft-path","--clustal-path","--galax-path", "--mrbayes-nst", "--mrbayes-rates", "--mrbayes-ngen", "--mrbayes-burninfrac", "--mrbayes-samplefreq", "--mrbayes-printfreq"]
 
