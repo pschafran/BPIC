@@ -1,5 +1,11 @@
 # Bayesian Phylogenetic Information Content
 
+#### Dev Notes:
+* Only tested on macOS Monterey (12.4), zsh shell, Python 3.8.5
+* Locus-based file arrangement untested
+* 
+
+
 ## Overview
 Script for batch processing of homologous loci for up to 12 taxa to calculate Bayesian phylogenetic information content in the data. Steps:
 0. Input data can be a FASTA file for each taxon containing one sequence for each locus, or a FASTA a file for each locus containing one sequence per taxon.
@@ -7,6 +13,32 @@ Script for batch processing of homologous loci for up to 12 taxa to calculate Ba
 2. Tree building (via Mr. Bayes)
 3. Analyze information content (via Galax)
 
+## Installation
+Clone github repo
+
+#### Dependencies
+* Python >= 3.8
+* BioPython [https://biopython.org/](https://biopython.org/)
+* MAFFT [https://mafft.cbrc.jp/alignment/software/](https://mafft.cbrc.jp/alignment/software/) and/or Clustal Omega [http://www.clustal.org/omega/](http://www.clustal.org/omega/)
+* MrBayes [https://nbisweden.github.io/MrBayes/download.html](https://nbisweden.github.io/MrBayes/download.html)
+* Galax [https://github.com/plewis/galax](https://github.com/plewis/galax)
+
+In my experience, using Conda to install MAFFT and Clustal Omega works, MrBayes works when installed through Homebrew.
+
+The base `BPIC` directory contains an empty directory where you can link dependencies if they are not read directly from the `PATH` variable. In particular, software installed with Conda may not be autodetected by `BPIC`. If you are able to call the program directly in a Terminal, you can do:
+```  
+cd BPIC/dependencies
+ln -s $(which mafft)
+ln -s $(which clustalo)
+```
+If executables are not in the Terminal's `PATH`, you can link to the absolute path of the file:
+```
+ln -s /Users/peter/bin/galax-1.1.0-mac/galax1 galax
+```
+Alternatively, paths can be provided on the command line:
+```
+BPIC.py -i input_files -o output -f taxon --mafft-path /Users/peter/opt/miniconda3/bin/mafft --mrbayes-path /opt/homebrew/bin/mb
+```
 
 ## Input Data Formatting
 Input data can be a FASTA file for each taxon containing one sequence for each locus, or a FASTA a file for each locus containing one sequence per taxon. In either case, sequence names must be identical across files for each taxon/locus. Example formatting below:
