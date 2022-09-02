@@ -19,13 +19,28 @@ def mafftAlign(mafftPath, seqFile, outputDir, threads):
 	process.wait()
 	(out, err) = process.communicate() #the stdout and stderr
 
-def convertFastaToNexus(inputFile, outputDir):
+def convertFastaToNexus(inputFile, outputDir, mrBayesNST = 6, mrBayesRates = "invgamma", mrBayesNgen = 10000000, mrBayesBurninFrac = 0.25, mrBayesSampleFreq = 1000, mrBayesPrintFreq = 10000, threads = 1 ):
 	filename = inputFile.split("/")[-1]
 	locus = ".".join(filename.split(".")[0:-1])
 	AlignIO.convert(inputFile, "fasta", "%s/alignments/nexus/%s.nex" %(outputDir,locus), "nexus", molecule_type = "DNA")
+	with open("%s/alignments/nexus/%s.nex" %(outputDir,locus), "a") as outfile:
+		outfile.write("\n")
+		outfile.write("begin mrbayes;\n")
+		outfile.write("set autoclose=yes nowarn=yes;\n")
+		outfile.write("set Beagleresource=%s;\n" % threads)
+		outfile.write("lset nst=%s rates=%s;\n" %(mrBayesNST, mrBayesRates))
+		outfile.write("mcmc ngen=%s relburnin=yes burninfrac=%s samplefreq=%s printfreq=%s nchains=4 savebrlens=yes;\n" %(mrBayesNgen, mrBayesBurninFrac, mrBayesSampleFreq, mrBayesPrintFreq))
+		outfile.write("sump burnin=2500;\n")
+		outfile.write("sumt burnin=2500;\n")
+		#outfile.write("charset %s = 1-%s;\n" %(locus1, masterDict[aln1]['nchar']))
+		#outfile.write("charset %s = %s-%s;\n" %(locus2, masterDict[aln1]['nchar']+1, totalChar))
+		#outfile.write("partition combined = 2: %s,%s;\n" %(locus1, locus2))
+		outfile.write("end;\n")
+		outfile.close()
 
 
-def concatenateAlignments(aln1, aln2, outputDir):
+
+def concatenateAlignments(aln1, aln2, outputDir, mrBayesNST = 6, mrBayesRates = "invgamma", mrBayesNgen = 10000000, mrBayesBurninFrac = 0.25, mrBayesSampleFreq = 1000, mrBayesPrintFreq = 10000, threads = 1 ):
 	filename1 = aln1.split("/")[-1]
 	locus1 = ".".join(filename1.split(".")[0:-1])
 	filename2 = aln2.split("/")[-1]
@@ -55,6 +70,8 @@ def concatenateAlignments(aln1, aln2, outputDir):
 				nchar = int(splitline[2].split("=")[1])
 				masterDict[file]['nchar'] = nchar
 				#print "Number of taxa: %s" % ntax
+			if line == "begin mrbayes;":
+				break
 			if linecounter>5 and len(line.split(" ")) >= 2:
 				taxon = line.strip("\n").split(" ")[0]
 				sequence = line.strip("\n").split(" ")[-1]
@@ -110,6 +127,12 @@ def concatenateAlignments(aln1, aln2, outputDir):
 	outfile.write("end;\n")
 	outfile.write("\n")
 	outfile.write("begin mrbayes;\n")
+	outfile.write("set autoclose=yes nowarn=yes;\n")
+	outfile.write("set Beagleresource=%s;\n" % threads)
+	outfile.write("lset nst=%s rates=%s;\n" %(mrBayesNST, mrBayesRates))
+	outfile.write("mcmc ngen=%s relburnin=yes burninfrac=%s samplefreq=%s printfreq=%s nchains=4 savebrlens=yes;\n" %(mrBayesNgen, mrBayesBurninFrac, mrBayesSampleFreq, mrBayesPrintFreq))
+	outfile.write("sump burnin=2500;\n")
+	outfile.write("sumt burnin=2500;\n")
 	outfile.write("charset %s = 1-%s;\n" %(locus1, masterDict[aln1]['nchar']))
 	outfile.write("charset %s = %s-%s;\n" %(locus2, masterDict[aln1]['nchar']+1, totalChar))
 	outfile.write("partition combined = 2: %s,%s;\n" %(locus1, locus2))

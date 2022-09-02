@@ -14,10 +14,10 @@ from assets.alignment import mafftAlign
 from assets.alignment import clustalAlign
 from assets.alignment import convertFastaToNexus
 from assets.alignment import concatenateAlignments
+from assets.tree import mrBayes
 from multiprocessing import Pool
 from Bio import SeqIO
 from collections import Counter
-
 
 cite = '''
 By: Peter W. Schafran
@@ -134,3 +134,18 @@ if __name__ == "__main__":
 			if locus1 != locus2:
 				concatenateAlignments("%s/alignments/nexus/%s.nex" %(outputDir,locus1), "%s/alignments/nexus/%s.nex" %(outputDir,locus2), outputDir)
 	logOutput(log, logFile, "Concatenation finished.\n---------------------------")
+
+	# Generate Trees
+	logOutput(log, logFile, "Running MrBayes...")
+	fileList = [ file for file in glob.glob("%s/alignments/nexus/*" % outputDir) if os.path.isfile(file) ]
+	totalFiles = len(fileList)
+	fileCounter = 1
+	for file in fileList:
+		mrBayes(mrBayesPath, file, outputDir, log, logFile, threads)
+		completionPerc = int(float(100*fileCounter)/float(totalFiles))
+		sys.stdout.write('\r')
+		sys.stdout.write("[%-100s] %d%%" % ('='*completionPerc, completionPerc))
+		sys.stdout.flush()
+		fileCounter+=1
+	sys.stdout.write('\n')
+	logOutput(log, logFile, "MrBayes finished.")
