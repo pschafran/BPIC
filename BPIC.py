@@ -15,7 +15,7 @@ from assets.alignment import clustalAlign
 from assets.alignment import convertFastaToNexus
 from assets.alignment import concatenateAlignments
 from assets.tree import mrBayes
-from multiprocessing import Pool
+import multiprocessing
 from Bio import SeqIO
 from collections import Counter
 
@@ -124,15 +124,18 @@ if __name__ == "__main__":
 	fileList = [ file for file in glob.glob("%s/alignments/*" % outputDir) if os.path.isfile(file) ]
 	logOutput(log, logFile, "Converting alignments...")
 	for file in fileList:
-		convertFastaToNexus(file, outputDir)
+		convertFastaToNexus(file, outputDir, mrBayesNST, mrBayesRates, mrBayesNgen, mrBayesBurninFrac, mrBayesSampleFreq, mrBayesPrintFreq, threads)
 	logOutput(log, logFile, "Conversion finished.\n---------------------------")
 
 	# Concatenate alignments
 	logOutput(log, logFile, "Concatenating alignments...")
+	completedList = []
+	# Iterate over all possible combinations of loci
 	for locus1 in locusList:
 		for locus2 in locusList:
-			if locus1 != locus2:
-				concatenateAlignments("%s/alignments/nexus/%s.nex" %(outputDir,locus1), "%s/alignments/nexus/%s.nex" %(outputDir,locus2), outputDir)
+			if "%s-%s" %(locus2,locus1) not in completedList and locus1 != locus2: # check if the opposite combination of loci has already been done
+				concatenateAlignments("%s/alignments/nexus/%s.nex" %(outputDir,locus1), "%s/alignments/nexus/%s.nex" %(outputDir,locus2), outputDir, mrBayesNST, mrBayesRates, mrBayesNgen, mrBayesBurninFrac, mrBayesSampleFreq, mrBayesPrintFreq, threads)
+				completedList.append("%s-%s" %(locus1,locus2))
 	logOutput(log, logFile, "Concatenation finished.\n---------------------------")
 
 	# Generate Trees
@@ -140,12 +143,16 @@ if __name__ == "__main__":
 	fileList = [ file for file in glob.glob("%s/alignments/nexus/*" % outputDir) if os.path.isfile(file) ]
 	totalFiles = len(fileList)
 	fileCounter = 1
-	for file in fileList:
-		mrBayes(mrBayesPath, file, outputDir, log, logFile, threads)
-		completionPerc = int(float(100*fileCounter)/float(totalFiles))
-		sys.stdout.write('\r')
-		sys.stdout.write("[%-100s] %d%%" % ('='*completionPerc, completionPerc))
-		sys.stdout.flush()
-		fileCounter+=1
-	sys.stdout.write('\n')
+	mbCmdList = []
+	for file in sorted(fileList):
+		mbCmdList.append("%s %s" %(mrBayesPath, file))
+	with multiprocessing.Pool(threads) as pool:
+		for count,value in enumerate(pool.imap(mrBayes,mbCmdList)):
+			print(count)
+			#Progress bar
+			completionPerc = int(float(100*count)/float(len(mbCmdList)))
+			sys.stdout.write('\r')
+			sys.stdout.write("[%-100s] %d%%" % ('='*completionPerc, completionPerc))
+			sys.stdout.flush()
+		sys.stdout.write('\n')
 	logOutput(log, logFile, "MrBayes finished.")

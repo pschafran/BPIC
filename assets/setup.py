@@ -37,7 +37,7 @@ Advanced:
 --galax-path	Path to Galax executable
 	'''
 
-	acceptedParameters = ["-i","--input","-f","--format","-a","--aligner","-t","--threads","-o","--output","--force","-h","--help","-v","--version","-c","--cite","--mrbayes-path","--mafft-path","--clustal-path","--galax-path"]
+	acceptedParameters = ["-i","--input","-f","--format","-a","--aligner","-t","--threads","-o","--output","--force","-h","--help","-v","--version","-c","--cite","--mrbayes-path","--mafft-path","--clustal-path","--galax-path", "--mrbayes-nst", "--mrbayes-rates", "--mrbayes-ngen", "--mrbayes-burninfrac", "--mrbayes-samplefreq", "--mrbayes-printfreq"]
 
 	# Set default parameters
 	aligner = "mafft"
@@ -50,6 +50,12 @@ Advanced:
 	mafftPath = ""
 	clustalPath = ""
 	galaxPath = ""
+	mrBayesNST = 6
+	mrBayesRates = "invgamma"
+	mrBayesNgen = 10000000
+	mrBayesBurninFrac = 0.25
+	mrBayesSampleFreq = 1000
+	mrBayesPrintFreq = 10000
 
 	if "-h" in commandline or "--help" in commandline:
 		print(help)
@@ -105,11 +111,24 @@ Advanced:
 			clustalPath = commandline[i+1]
 		if parameter == "--galax-path":
 			galaxPath = commandline[i+1]
+		if parameter == "--mrbayes-nst":
+			mrBayesNST = commandline[i+1]
+		if parameter == "--mrbayes-rates":
+			mrBayesRates = commandline[i+1]
+		if parameter == "--mrbayes-ngen":
+			mrBayesNgen = commandline[i+1]
+		if parameter == "--mrbayes-burninfrac":
+			mrBayesBurninFrac = commandline[i+1]
+		if parameter == "--mrbayes-samplefreq":
+			mrBayesSampleFreq = commandline[i+1]
+		if parameter == "--mrbayes-printfreq":
+			mrBayesPrintFreq = commandline[i+1]
+
 		# Replace base logFile name with outputDir + logFile after whole command line is read
 		if log == True:
 			logFile = "%s/%s" %(outputDir,logFile)
 		i += 1
-	parameterDict = {"inputDir" : inputDir, "fileFormat" : fileFormat, "aligner" : aligner, "forceOverwrite" : forceOverwrite, "log" : log, "logFile" : logFile, "outputDir" : outputDir, "threads" : threads, "mrBayesPath" : mrBayesPath, "mafftPath" : mafftPath, "clustalPath" : clustalPath, "galaxPath" : galaxPath}
+	parameterDict = {"inputDir" : inputDir, "fileFormat" : fileFormat, "aligner" : aligner, "forceOverwrite" : forceOverwrite, "log" : log, "logFile" : logFile, "outputDir" : outputDir, "threads" : threads, "mrBayesPath" : mrBayesPath, "mafftPath" : mafftPath, "clustalPath" : clustalPath, "galaxPath" : galaxPath, "mrBayesNST" : mrBayesNST, "mrBayesRates" : mrBayesRates, "mrBayesNgen" : mrBayesNgen, "mrBayesBurninFrac" : mrBayesBurninFrac, "mrBayesSampleFreq" : mrBayesSampleFreq, "mrBayesPrintFreq" : mrBayesPrintFreq }
 	return parameterDict
 
 def checkDependencies(aligner, mrBayes, mafft, clustal, galax, dependencyDir, log = False, logFile = "null"):
