@@ -3,8 +3,9 @@
 #### Dev Notes:
 * Only tested on macOS Monterey (12.4), zsh shell, Python 3.8.5
 * Locus-based file arrangement untested
-*
 
+#### To Do
+* Add CDS option for coding site partitioning
 
 ## Overview
 Script for batch processing of homologous loci for up to 12 taxa to calculate Bayesian phylogenetic information content in the data. Steps:
@@ -31,15 +32,19 @@ The base `BPIC` directory contains an empty directory where you can link depende
 cd BPIC/dependencies
 ln -s $(which mafft)
 ln -s $(which clustalo)
+ln -s $(which galax)
+ln -s $(which mb)
 ```
 If executables are not in the Terminal's `PATH`, you can link to the absolute path of the file:
 ```
 cd BPIC/dependencies
 ln -s /Users/peter/bin/galax-1.1.0-mac/galax1 galax
+etc.
 ```
 Alternatively, paths can be provided on the command line when the program is run:
 ```
-BPIC.py -i input_files -o output -f taxon --mafft-path /Users/peter/opt/miniconda3/bin/mafft --mrbayes-path /opt/homebrew/bin/mb
+BPIC.py -i input_files -o output -f taxon --mafft-path /Users/peter/opt/miniconda3/bin/mafft --mrbayes-path /opt/homebrew/bin/mb ...
+
 ```
 
 ## Input Data Formatting

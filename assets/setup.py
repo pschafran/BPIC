@@ -18,12 +18,15 @@ Required parameters
 -i, --input	Directory containing FASTA files
 -f, --format	Input file format (either locus or taxon)
 
-Optional parameters
+Optional parameters (require a value after the flag)
 -a, --aligner	Alignment software (either mafft or clustal; default: mafft)
---force Force overwrite existing results
 -l, --log	Log file name. File includes more details than screen output (default: printed to screen)
 -o, --output	Output directory name (default: output)
 -t, --threads	Maximum number of threads to use (default: 1)
+
+Optional flags (do not require a value after the flag)
+--CDS	Partition MrBayes analysis by coding site
+--force Overwrite existing results
 
 MrBayes Parameters -v alues must be recognized by MrBayes (see https://nbisweden.github.io/MrBayes/manual.html)
 --mrbayes-nst	Substitution model
@@ -31,7 +34,7 @@ MrBayes Parameters -v alues must be recognized by MrBayes (see https://nbisweden
 --mrbayes-ngen	Number of cycles for MCMC
 --mrbayes-burninfrac	Proportion of samples to be discarded for convergence calculation (burn-in)
 --mrbayes-samplefreq	How often to sample the Markov chain
---mrbayes-printfreq	How often to print information about the Markov chain
+--mrbayes-nsteps	Number of steps in the stepping-stone analysis
 
 Help
 -c, --cite	Show citation information
@@ -45,13 +48,14 @@ Advanced
 --galax-path	Path to Galax executable
 '''
 
-	acceptedParameters = ["-i","--input","-f","--format","-a","--aligner","-t","--threads","-o","--output","--force","-h","--help","-v","--version","-c","--cite","--mrbayes-path","--mafft-path","--clustal-path","--galax-path", "--mrbayes-nst", "--mrbayes-rates", "--mrbayes-ngen", "--mrbayes-burninfrac", "--mrbayes-samplefreq", "--mrbayes-printfreq"]
+	acceptedParameters = ["-i","--input","-f","--format","-a","--aligner","-t","--threads","-o","--output","--force","--CDS","-h","--help","-v","--version","-c","--cite","--mrbayes-path","--mafft-path","--clustal-path","--galax-path", "--mrbayes-nst", "--mrbayes-rates", "--mrbayes-ngen", "--mrbayes-burninfrac", "--mrbayes-samplefreq", "--mrbayes-nsteps"]
 
 	# Set default parameters
 	aligner = "mafft"
 	outputDir = "output"
 	threads = 1
 	forceOverwrite = False
+	CDS = False
 	log = False
 	logFile = "null"
 	mrBayesPath = ""
@@ -63,7 +67,9 @@ Advanced
 	mrBayesNgen = 10000000
 	mrBayesBurninFrac = 0.25
 	mrBayesSampleFreq = 1000
-	mrBayesPrintFreq = 10000
+	mrBayesPrintFreq = 10000000
+	mrBayesNsteps = 30
+
 
 	if "-h" in commandline or "--help" in commandline:
 		print(help)
@@ -82,6 +88,10 @@ Advanced
 		exit(1)
 	if "--force" in commandline:
 		forceOverwrite = True
+	if forceOverwrite == True and "-o" not in commandline and "--output" not in commandline:
+		shutil.rmtree("output")
+	if "--CDS" in commandline:
+		CDS = True
 	i = 0
 	for parameter in commandline[i:]:
 		if parameter in ["-i","--input"]:
@@ -129,14 +139,14 @@ Advanced
 			mrBayesBurninFrac = commandline[i+1]
 		if parameter == "--mrbayes-samplefreq":
 			mrBayesSampleFreq = commandline[i+1]
-		if parameter == "--mrbayes-printfreq":
-			mrBayesPrintFreq = commandline[i+1]
+		if parameter == "--mrbayes-nsteps":
+			mrBayesNsteps = commandline[i+1]
 
 		# Replace base logFile name with outputDir + logFile after whole command line is read
 		if log == True:
 			logFile = "%s/%s" %(outputDir,logFile)
 		i += 1
-	parameterDict = {"inputDir" : inputDir, "fileFormat" : fileFormat, "aligner" : aligner, "forceOverwrite" : forceOverwrite, "log" : log, "logFile" : logFile, "outputDir" : outputDir, "threads" : threads, "mrBayesPath" : mrBayesPath, "mafftPath" : mafftPath, "clustalPath" : clustalPath, "galaxPath" : galaxPath, "mrBayesNST" : mrBayesNST, "mrBayesRates" : mrBayesRates, "mrBayesNgen" : mrBayesNgen, "mrBayesBurninFrac" : mrBayesBurninFrac, "mrBayesSampleFreq" : mrBayesSampleFreq, "mrBayesPrintFreq" : mrBayesPrintFreq }
+	parameterDict = {"inputDir" : inputDir, "fileFormat" : fileFormat, "aligner" : aligner, "forceOverwrite" : forceOverwrite, "CDS" : CDS, "log" : log, "logFile" : logFile, "outputDir" : outputDir, "threads" : threads, "mrBayesPath" : mrBayesPath, "mafftPath" : mafftPath, "clustalPath" : clustalPath, "galaxPath" : galaxPath, "mrBayesNST" : mrBayesNST, "mrBayesRates" : mrBayesRates, "mrBayesNgen" : mrBayesNgen, "mrBayesBurninFrac" : mrBayesBurninFrac, "mrBayesSampleFreq" : mrBayesSampleFreq, "mrBayesNsteps" : mrBayesNsteps }
 	return parameterDict
 
 def checkDependencies(aligner, mrBayes, mafft, clustal, galax, dependencyDir, log = False, logFile = "null"):

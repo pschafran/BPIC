@@ -27,23 +27,35 @@ https://github.com/pschafran/BPIC
 version = "0.1"
 
 help = '''
-Required parameters:
+Required parameters
 -i, --input	Directory containing FASTA files
 -f, --format	Input file format (either locus or taxon)
 
-Optional parameters:
+Optional parameters (require a value after the flag)
 -a, --aligner	Alignment software (either mafft or clustal; default: mafft)
---force Force overwrite existing results
 -l, --log	Log file name. File includes more details than screen output (default: printed to screen)
 -o, --output	Output directory name (default: output)
 -t, --threads	Maximum number of threads to use (default: 1)
 
-Help:
+Optional flags (do not require a value after the flag)
+--CDS	Partition MrBayes analysis by coding site
+--force Overwrite existing results
+
+MrBayes Parameters -v alues must be recognized by MrBayes (see https://nbisweden.github.io/MrBayes/manual.html)
+--mrbayes-nst	Substitution model
+--mrbayes-rates	Model for among-site rate variation
+--mrbayes-ngen	Number of cycles for MCMC
+--mrbayes-burninfrac	Proportion of samples to be discarded for convergence calculation (burn-in)
+--mrbayes-samplefreq	How often to sample the Markov chain
+--mrbayes-nsteps	Number of steps in the stepping-stone analysis
+--mrbayes-CDS	Partitions analysis based on codon site
+
+Help
 -c, --cite	Show citation information
 -h, --help	Show this help menu
 -v, --version	Show version number
 
-Advanced:
+Advanced
 --mrbayes-path	Path to Mr Bayes executable
 --mafft-path	Path to MAFFT executable
 --clustal-path	Path to Clustal executable
@@ -124,18 +136,18 @@ if __name__ == "__main__":
 	fileList = [ file for file in glob.glob("%s/alignments/*" % outputDir) if os.path.isfile(file) ]
 	logOutput(log, logFile, "Converting alignments...")
 	for file in fileList:
-		convertFastaToNexus(file, outputDir, mrBayesNST, mrBayesRates, mrBayesNgen, mrBayesBurninFrac, mrBayesSampleFreq, mrBayesPrintFreq, threads)
+		convertFastaToNexus(file, outputDir, CDS, mrBayesNST, mrBayesRates, mrBayesNgen, mrBayesBurninFrac, mrBayesSampleFreq, mrBayesNsteps, threads)
 	logOutput(log, logFile, "Conversion finished.\n---------------------------")
 
 	# Concatenate alignments
 	logOutput(log, logFile, "Concatenating alignments...")
-	completedList = []
+	concatLocusList = []
 	# Iterate over all possible combinations of loci
 	for locus1 in locusList:
 		for locus2 in locusList:
-			if "%s-%s" %(locus2,locus1) not in completedList and locus1 != locus2: # check if the opposite combination of loci has already been done
-				concatenateAlignments("%s/alignments/nexus/%s.nex" %(outputDir,locus1), "%s/alignments/nexus/%s.nex" %(outputDir,locus2), outputDir, mrBayesNST, mrBayesRates, mrBayesNgen, mrBayesBurninFrac, mrBayesSampleFreq, mrBayesPrintFreq, threads)
-				completedList.append("%s-%s" %(locus1,locus2))
+			if "%s-%s" %(locus2,locus1) not in concatLocusList and locus1 != locus2: # check if the opposite combination of loci has already been done
+				concatenateAlignments("%s/alignments/nexus/%s.nex" %(outputDir,locus1), "%s/alignments/nexus/%s.nex" %(outputDir,locus2), outputDir, CDS, mrBayesNST, mrBayesRates, mrBayesNgen, mrBayesBurninFrac, mrBayesSampleFreq, mrBayesNsteps, threads)
+				concatLocusList.append("%s-%s" %(locus1,locus2))
 	logOutput(log, logFile, "Concatenation finished.\n---------------------------")
 
 	# Generate Trees
@@ -148,7 +160,6 @@ if __name__ == "__main__":
 		mbCmdList.append("%s %s" %(mrBayesPath, file))
 	with multiprocessing.Pool(threads) as pool:
 		for count,value in enumerate(pool.imap(mrBayes,mbCmdList)):
-			print(count)
 			#Progress bar
 			completionPerc = int(float(100*count)/float(len(mbCmdList)))
 			sys.stdout.write('\r')
@@ -156,3 +167,28 @@ if __name__ == "__main__":
 			sys.stdout.flush()
 		sys.stdout.write('\n')
 	logOutput(log, logFile, "MrBayes finished.")
+
+	# Extract marginal likelihoods from MrBayes logs
+	logOutput(log, logFile, "Extracting marginal likelihoods...")
+	os.mkdir("%s/tree_info" %(outputDir))
+	margLikelihoodDict = {}
+	with open("%s/tree_info/marginal_likelihoods.txt" % outputDir, "w") as outFile:
+		for locus1 in locusList:
+			for locus2 in locusList:
+				if "%s-%s" %(locus1,locus2) in concatLocusList:
+					 concat_brlenUnlinked_ln = extractMargLik("%s/alignments/nexus/%s-%s_brlen_unlinked.nex.log" %(locus1,locus2))
+					 concat_brlenLinked_ln = extractMargLik("%s/alignments/nexus/%s-%s_brlen_linked.nex.log" %(locus1,locus2))
+					 gene1_ln = extractMargLik("%s/alignments/nexus/%s.nex.log" % locus1)
+					 gene2_ln = extractMargLik("%s/alignments/nexus/%s.nex.log" % locus2)
+					 margLikelihoodDict.update({"%s-%s" : {"gene1": locus1, "gene2": locus2, "concat_brlenUnlinked_ln": concat_brlenUnlinked_ln, "concat_brlenLinked_ln": concat_brlenLinked_ln, "gene1_ln": gene1_ln, "gene2_ln": gene2_ln}})
+					 outfile.write("{gene1: %s, gene2: %s, concat_brlenUnlinked_ln: %s, concat_brlenLinked_ln: %s, gene1_ln: %s, gene2_ln: %s},\n" %(locus1,locus2,concat_brlenUnlinked_ln, concat_brlenLinked_ln, gene1_ln, gene2_ln))
+	logOutput(log, logFile, "Marginal likelihoods written to %s/tree_info/marginal_likelihoods.txt." % outputDir)
+
+
+
+
+
+
+
+
+#			#
