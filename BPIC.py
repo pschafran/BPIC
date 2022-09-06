@@ -194,8 +194,8 @@ if __name__ == "__main__":
 		for locus1 in locusList:
 			for locus2 in locusList:
 				if "%s-%s" %(locus1,locus2) in concatLocusList:
-					 concat_brlenUnlinked_ln = extractMargLik("%s/alignments/nexus/%s-%s_brlen_unlinked.nex.log" %(outputDir,locus1,locus2))
-					 concat_brlenLinked_ln = extractMargLik("%s/alignments/nexus/%s-%s_brlen_linked.nex.log" %(outputDir,locus1,locus2))
+					 concat_brlenUnlinked_ln = extractMargLik("%s/alignments/nexus/%s-%s_brlen-unlinked.nex.log" %(outputDir,locus1,locus2))
+					 concat_brlenLinked_ln = extractMargLik("%s/alignments/nexus/%s-%s_brlen-linked.nex.log" %(outputDir,locus1,locus2))
 					 gene1_ln = extractMargLik("%s/alignments/nexus/%s.nex.log" %(outputDir,locus1))
 					 gene2_ln = extractMargLik("%s/alignments/nexus/%s.nex.log" %(outputDir,locus2))
 					 margLikelihoodDict.update({"%s-%s" : {"gene1": locus1, "gene2": locus2, "concat_brlenUnlinked_ln": concat_brlenUnlinked_ln, "concat_brlenLinked_ln": concat_brlenLinked_ln, "gene1_ln": gene1_ln, "gene2_ln": gene2_ln}})
