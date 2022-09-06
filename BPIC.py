@@ -196,8 +196,8 @@ if __name__ == "__main__":
 				if "%s-%s" %(locus1,locus2) in concatLocusList:
 					 concat_brlenUnlinked_ln = extractMargLik("%s/alignments/nexus/%s-%s_brlen_unlinked.nex.log" %(outputDir,locus1,locus2))
 					 concat_brlenLinked_ln = extractMargLik("%s/alignments/nexus/%s-%s_brlen_linked.nex.log" %(outputDir,locus1,locus2))
-					 gene1_ln = extractMargLik("%s/alignments/nexus/%s.nex.log" %(outputDir,locus1)
-					 gene2_ln = extractMargLik("%s/alignments/nexus/%s.nex.log" %(outputDir,locus2)
+					 gene1_ln = extractMargLik("%s/alignments/nexus/%s.nex.log" %(outputDir,locus1))
+					 gene2_ln = extractMargLik("%s/alignments/nexus/%s.nex.log" %(outputDir,locus2))
 					 margLikelihoodDict.update({"%s-%s" : {"gene1": locus1, "gene2": locus2, "concat_brlenUnlinked_ln": concat_brlenUnlinked_ln, "concat_brlenLinked_ln": concat_brlenLinked_ln, "gene1_ln": gene1_ln, "gene2_ln": gene2_ln}})
 					 outfile.write("{gene1: %s, gene2: %s, concat_brlenUnlinked_ln: %s, concat_brlenLinked_ln: %s, gene1_ln: %s, gene2_ln: %s},\n" %(locus1,locus2,concat_brlenUnlinked_ln, concat_brlenLinked_ln, gene1_ln, gene2_ln))
 	logOutput(log, logFile, "Marginal likelihoods written to %s/tree_info/marginal_likelihoods.txt." % outputDir)
