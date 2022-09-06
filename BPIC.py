@@ -15,6 +15,7 @@ from assets.alignment import clustalAlign
 from assets.alignment import convertFastaToNexus
 from assets.alignment import concatenateAlignments
 from assets.tree import mrBayes
+from assets.tree import extractMargLik
 import multiprocessing
 from Bio import SeqIO
 from collections import Counter
@@ -72,7 +73,7 @@ if __name__ == "__main__":
 	#print("Parameter checking...")
 	parameterDict = checkArgs(sys.argv)
 	globals().update(parameterDict)
-	logOutput(log, logFile, parameterDict)
+	#logOutput(log, logFile, parameterDict)
 	logOutput(log, logFile, "Parameter checking passed.\n---------------------------")
 	mrBayesPath,galaxPath,alignerPath = checkDependencies(aligner, mrBayesPath, mafftPath, clustalPath, galaxPath, dependencyDir, log, logFile)
 	logOutput(log, logFile, "Dependency checking passed.\n---------------------------")
@@ -132,7 +133,8 @@ if __name__ == "__main__":
 	logOutput(log, logFile, "Alignments finished.\n---------------------------")
 
 	#Convert alignments to Nexus
-	os.mkdir("%s/alignments/nexus" %(outputDir))
+	os.mkdir("%s/alignments/nexus" % outputDir)
+	os.mkdir("%s/alignments/nexus/information_content" % outputDir)
 	fileList = [ file for file in glob.glob("%s/alignments/*" % outputDir) if os.path.isfile(file) ]
 	logOutput(log, logFile, "Converting alignments...")
 	for file in fileList:
@@ -151,7 +153,7 @@ if __name__ == "__main__":
 	logOutput(log, logFile, "Concatenation finished.\n---------------------------")
 
 	# Generate Trees
-	logOutput(log, logFile, "Running MrBayes...")
+	logOutput(log, logFile, "Generating marginal likelihood trees...")
 	fileList = [ file for file in glob.glob("%s/alignments/nexus/*" % outputDir) if os.path.isfile(file) ]
 	totalFiles = len(fileList)
 	fileCounter = 1
@@ -166,7 +168,23 @@ if __name__ == "__main__":
 			sys.stdout.write("[%-100s] %d%%" % ('='*completionPerc, completionPerc))
 			sys.stdout.flush()
 		sys.stdout.write('\n')
-	logOutput(log, logFile, "MrBayes finished.")
+	logOutput(log, logFile, "Marginal likelihood trees finished.")
+	logOutput(log, logFile, "Generating information content trees...")
+	fileList = [ file for file in glob.glob("%s/alignments/nexus/information_content/*" % outputDir) if os.path.isfile(file) ]
+	totalFiles = len(fileList)
+	fileCounter = 1
+	mbCmdList = []
+	for file in sorted(fileList):
+		mbCmdList.append("%s %s" %(mrBayesPath, file))
+	with multiprocessing.Pool(threads) as pool:
+		for count,value in enumerate(pool.imap(mrBayes,mbCmdList)):
+			#Progress bar
+			completionPerc = int(float(100*count)/float(len(mbCmdList)))
+			sys.stdout.write('\r')
+			sys.stdout.write("[%-100s] %d%%" % ('='*completionPerc, completionPerc))
+			sys.stdout.flush()
+		sys.stdout.write('\n')
+	logOutput(log, logFile, "Information content trees finished.\n---------------------------")
 
 	# Extract marginal likelihoods from MrBayes logs
 	logOutput(log, logFile, "Extracting marginal likelihoods...")
@@ -184,9 +202,13 @@ if __name__ == "__main__":
 					 outfile.write("{gene1: %s, gene2: %s, concat_brlenUnlinked_ln: %s, concat_brlenLinked_ln: %s, gene1_ln: %s, gene2_ln: %s},\n" %(locus1,locus2,concat_brlenUnlinked_ln, concat_brlenLinked_ln, gene1_ln, gene2_ln))
 	logOutput(log, logFile, "Marginal likelihoods written to %s/tree_info/marginal_likelihoods.txt." % outputDir)
 
-
-
-
+	# Run Galax
+	treefileList = [ file for file in glob.glob("%s/alignments/information_content/*.t" % outputDir) if os.path.isfile(file) ]
+	with open("%s/tree_info/galax_treelist.txt" % outputDir, "w") as galaxInputFile:
+		for file in treefileList:
+			galaxInputFile.write("%s\n" % file)
+	galaxCmd = "%s --listfile %s/tree_info/galax_treelist.txt --skip 1000" %(galaxPath, outputDir)
+	subprocess.Popen(galaxCmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, text=True)
 
 
 

@@ -23,6 +23,7 @@ def convertFastaToNexus(inputFile, outputDir, CDS, mrBayesNST = 6, mrBayesRates 
 	filename = inputFile.split("/")[-1]
 	locus = ".".join(filename.split(".")[0:-1])
 	AlignIO.convert(inputFile, "fasta", "%s/alignments/nexus/%s.nex" %(outputDir,locus), "nexus", molecule_type = "DNA")
+	AlignIO.convert(inputFile, "fasta", "%s/alignments/nexus/information_content/%s.nex" %(outputDir,locus), "nexus", molecule_type = "DNA")
 	with open("%s/alignments/nexus/%s.nex" %(outputDir,locus), "r") as infile:
 		linecounter = 1
 		for line in infile:
@@ -46,7 +47,23 @@ def convertFastaToNexus(inputFile, outputDir, CDS, mrBayesNST = 6, mrBayesRates 
 			outfile.write("unlink shape=(all) statefreq=(all) revmat=(all);")
 		outfile.write("ss alpha=0.3 nsteps=%s burninss=-2;" % mrBayesNsteps)
 		outfile.write("sump;\n")
-		#outfile.write("sumt burnin=2500;\n")
+		outfile.write("end;\n")
+		outfile.close()
+	with open("%s/alignments/nexus/information_content/%s.nex" %(outputDir,locus), "a") as outfile:
+		outfile.write("\n")
+		outfile.write("begin mrbayes;\n")
+		outfile.write("set autoclose=yes nowarn=yes;\n")
+		outfile.write("lset nst=%s rates=%s;\n" %(mrBayesNST, mrBayesRates))
+		if CDS == True:
+			outfile.write("charset first  = 1-%d\\3;" % nchar)
+			outfile.write("charset second = 2-%d\\3;" % nchar)
+			outfile.write("charset third  = 3-%d\\3;" % nchar)
+			outfile.write("partition cds = 3: first, second, third;")
+			outfile.write("set partition = cds;")
+			outfile.write("unlink shape=(all) statefreq=(all) revmat=(all);")
+		outfile.write("mcmc ngen=%s relburnin=yes burninfrac=%s samplefreq=%s printfreq=%s nruns=1 starttree=random nchains=1 savebrlens=yes;\n" %(mrBayesNgen, mrBayesBurninFrac, mrBayesSampleFreq, mrBayesNgen))
+		outfile.write("sumt;\n")
+		outfile.write("sump;\n")
 		outfile.write("end;\n")
 		outfile.close()
 

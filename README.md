@@ -6,6 +6,7 @@
 
 #### To Do
 * Add CDS option for coding site partitioning
+* Ability to continue partially run analyses
 
 ## Overview
 Script for batch processing of homologous loci for up to 12 taxa to calculate Bayesian phylogenetic information content in the data. Steps:
