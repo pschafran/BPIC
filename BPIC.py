@@ -190,7 +190,7 @@ if __name__ == "__main__":
 	logOutput(log, logFile, "Extracting marginal likelihoods...")
 	os.mkdir("%s/tree_info" %(outputDir))
 	margLikelihoodDict = {}
-	with open("%s/tree_info/marginal_likelihoods.txt" % outputDir, "w") as outFile:
+	with open("%s/tree_info/marginal_likelihoods.txt" % outputDir, "w") as outfile:
 		for locus1 in locusList:
 			for locus2 in locusList:
 				if "%s-%s" %(locus1,locus2) in concatLocusList:
@@ -203,12 +203,17 @@ if __name__ == "__main__":
 	logOutput(log, logFile, "Marginal likelihoods written to %s/tree_info/marginal_likelihoods.txt." % outputDir)
 
 	# Run Galax
-	treefileList = [ file for file in glob.glob("%s/alignments/information_content/*.t" % outputDir) if os.path.isfile(file) ]
+	logOutput(log, logFile, "Analyzing trees with Galax...")
+	treefileList = [ file for file in glob.glob("%s/alignments/nexus/information_content/*.t" % outputDir) if os.path.isfile(file) ]
 	with open("%s/tree_info/galax_treelist.txt" % outputDir, "w") as galaxInputFile:
 		for file in treefileList:
 			galaxInputFile.write("%s\n" % file)
-	galaxCmd = "%s --listfile %s/tree_info/galax_treelist.txt --skip 1000" %(galaxPath, outputDir)
-	subprocess.Popen(galaxCmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, text=True)
+	galaxCmd = "%s --listfile %s/tree_info/galax_treelist.txt --skip 1000 --outfile %s/tree_info/galax_output" %(galaxPath, outputDir, outputDir)
+	process = subprocess.Popen(galaxCmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, text=True)
+	(out, err) = process.communicate()
+
+	logOutput(log, logFile, "Galax finished.\n---------------------------")
+
 
 
 
