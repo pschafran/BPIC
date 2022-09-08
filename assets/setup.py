@@ -8,7 +8,7 @@ from Bio import SeqIO
 def checkArgs(commandline):
 	cite = '''
 By: Peter W. Schafran
-Last Updated: 2022 August 28
+Last Updated: 2022 September 9
 https://github.com/pschafran/BPIC
 	'''
 	version = "0.1"
@@ -20,7 +20,7 @@ Required parameters
 
 Optional parameters (require a value after the flag)
 -a, --aligner	Alignment software (either mafft or clustal; default: mafft)
--l, --log	Log file name. File includes more details than screen output (default: printed to screen)
+-l, --log	Log file name. File includes more details than screen output (default: printed to screen/STDOUT)
 -o, --output	Output directory name (default: output)
 -t, --threads	Maximum number of threads to use (default: 1)
 

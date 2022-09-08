@@ -1,7 +1,7 @@
 # Bayesian Phylogenetic Information Content
 
 #### Dev Notes:
-* Test files run up to: getting marginal likelihood and Galax output
+* Test files run start to finish. Produces results.html that can be viewed stand-alone
 * Only tested on: 1) macOS Monterey (12.4), zsh shell, Python 3.8.5; 2) Ubuntu 14.04, bash shell, Python 3.7.6
 * Locus-based file arrangement untested
 
@@ -11,7 +11,7 @@
 * Add options for processing AA seqs
 
 ## Overview
-Script for batch processing of homologous loci for up to 12 taxa to calculate Bayesian phylogenetic information content in the data. Steps:
+Script for batch processing of homologous loci for up to ~12 taxa to calculate Bayesian phylogenetic information content in the data. Steps:
 
 1. Input data can be a FASTA file for each taxon containing one sequence for each locus, or a FASTA a file for each locus containing one sequence per taxon.
 2. Alignment (via MAFFT or Clustal Omega).
@@ -22,7 +22,7 @@ Script for batch processing of homologous loci for up to 12 taxa to calculate Ba
 Clone github repo
 
 #### Dependencies
-* Python >= 3.8
+* Python >= 3.X
 * BioPython [https://biopython.org/](https://biopython.org/)
 * MAFFT [https://mafft.cbrc.jp/alignment/software/](https://mafft.cbrc.jp/alignment/software/) and/or Clustal Omega [http://www.clustal.org/omega/](http://www.clustal.org/omega/)
 * MrBayes [https://nbisweden.github.io/MrBayes/download.html](https://nbisweden.github.io/MrBayes/download.html)
@@ -98,20 +98,25 @@ Required parameters
 -i, --input	Directory containing FASTA files
 -f, --format	Input file format (either locus or taxon)
 
-Optional parameters
+Optional parameters (require a value after the flag)
 -a, --aligner	Alignment software (either mafft or clustal; default: mafft)
---force Force overwrite existing results
--l, --log	Log file name. File includes more details than screen output (default: printed to screen)
+-l, --log	Log file name. File includes more details than screen output (default: printed to screen/STDOUT) // TODO
 -o, --output	Output directory name (default: output)
 -t, --threads	Maximum number of threads to use (default: 1)
 
-MrBayes Parameters - values must be recognized by MrBayes (see https://nbisweden.github.io/MrBayes/manual.html)
+Optional flags (do not require a value after the flag)
+--CDS	Partition MrBayes analysis by coding site
+--PROT	Analyze sequences as amino acids // TODO
+--force Overwrite existing results
+--continue	Resume a previously interrupted run // TODO
+
+MrBayes Parameters -v alues must be recognized by MrBayes (see https://nbisweden.github.io/MrBayes/manual.html)
 --mrbayes-nst	Substitution model
 --mrbayes-rates	Model for among-site rate variation
 --mrbayes-ngen	Number of cycles for MCMC
 --mrbayes-burninfrac	Proportion of samples to be discarded for convergence calculation (burn-in)
 --mrbayes-samplefreq	How often to sample the Markov chain
---mrbayes-printfreq	How often to print information about the Markov chain
+--mrbayes-nsteps	Number of steps in the stepping-stone analysis
 
 Help
 -c, --cite	Show citation information

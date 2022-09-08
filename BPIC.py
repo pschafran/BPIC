@@ -16,13 +16,15 @@ from assets.alignment import convertFastaToNexus
 from assets.alignment import concatenateAlignments
 from assets.tree import mrBayes
 from assets.tree import extractMargLik
+from assets.tree import extractIpct
+from assets.html import writeHTML
 import multiprocessing
 from Bio import SeqIO
 from collections import Counter
 
 cite = '''
 By: Peter W. Schafran
-Last Updated: 2022 August 28
+Last Updated: 2022 September 9
 https://github.com/pschafran/BPIC
 '''
 version = "0.1"
@@ -34,7 +36,7 @@ Required parameters
 
 Optional parameters (require a value after the flag)
 -a, --aligner	Alignment software (either mafft or clustal; default: mafft)
--l, --log	Log file name. File includes more details than screen output (default: printed to screen)
+-l, --log	Log file name. File includes more details than screen output (default: printed to screen/STDOUT)
 -o, --output	Output directory name (default: output)
 -t, --threads	Maximum number of threads to use (default: 1)
 
@@ -49,7 +51,6 @@ MrBayes Parameters -v alues must be recognized by MrBayes (see https://nbisweden
 --mrbayes-burninfrac	Proportion of samples to be discarded for convergence calculation (burn-in)
 --mrbayes-samplefreq	How often to sample the Markov chain
 --mrbayes-nsteps	Number of steps in the stepping-stone analysis
---mrbayes-CDS	Partitions analysis based on codon site
 
 Help
 -c, --cite	Show citation information
@@ -85,6 +86,7 @@ if __name__ == "__main__":
 	os.mkdir("%s" %(outputDir))
 	os.mkdir("%s/sequence_files" %(outputDir))
 	locusList = []
+	# If files already organized by locus, just copy to working directory
 	if fileFormat == "locus":
 		for file in fileList:
 			filename = file.split("/")[-1]
@@ -92,6 +94,7 @@ if __name__ == "__main__":
 			if locus not in locusList:
 				locusList.append(locus)
 			shutil.copy(file,"%s/sequence_files/" %(outputDir),follow_symlinks=True)
+	# If files organized by taxon, reorganize them into locus format
 	elif fileFormat == "taxon":
 		for file in fileList:
 			filename = file.split("/")[-1]
@@ -190,6 +193,9 @@ if __name__ == "__main__":
 	logOutput(log, logFile, "Extracting marginal likelihoods...")
 	os.mkdir("%s/tree_info" %(outputDir))
 	margLikelihoodDict = {}
+	# { locus1-locus2 : {"gene1": locus1, "gene2": locus2, "concat_brlenUnlinked_ln": concat_brlenUnlinked_ln, "concat_brlenLinked_ln": concat_brlenLinked_ln, "gene1_ln": gene1_ln, "gene2_ln": gene2_ln},\
+	#   locus1-locus3 : {...},\
+	#   locus1-locus4 : {...} }
 	with open("%s/tree_info/marginal_likelihoods.txt" % outputDir, "w") as outfile:
 		for locus1 in locusList:
 			for locus2 in locusList:
@@ -198,9 +204,9 @@ if __name__ == "__main__":
 					 concat_brlenLinked_ln = extractMargLik("%s/alignments/nexus/%s-%s_brlen-linked.nex.log" %(outputDir,locus1,locus2))
 					 gene1_ln = extractMargLik("%s/alignments/nexus/%s.nex.log" %(outputDir,locus1))
 					 gene2_ln = extractMargLik("%s/alignments/nexus/%s.nex.log" %(outputDir,locus2))
-					 margLikelihoodDict.update({"%s-%s" : {"gene1": locus1, "gene2": locus2, "concat_brlenUnlinked_ln": concat_brlenUnlinked_ln, "concat_brlenLinked_ln": concat_brlenLinked_ln, "gene1_ln": gene1_ln, "gene2_ln": gene2_ln}})
+					 margLikelihoodDict.update({"%s-%s" %(locus1,locus2) : {"gene1": locus1, "gene2": locus2, "concat_brlenUnlinked_ln": concat_brlenUnlinked_ln, "concat_brlenLinked_ln": concat_brlenLinked_ln, "gene1_ln": gene1_ln, "gene2_ln": gene2_ln}})
 					 outfile.write("{gene1: %s, gene2: %s, concat_brlenUnlinked_ln: %s, concat_brlenLinked_ln: %s, gene1_ln: %s, gene2_ln: %s},\n" %(locus1,locus2,concat_brlenUnlinked_ln, concat_brlenLinked_ln, gene1_ln, gene2_ln))
-	logOutput(log, logFile, "Marginal likelihoods written to %s/tree_info/marginal_likelihoods.txt." % outputDir)
+	logOutput(log, logFile, "Marginal likelihoods written to %s/tree_info/marginal_likelihoods.txt" % outputDir)
 
 	# Run Galax
 	logOutput(log, logFile, "Analyzing trees with Galax...")
@@ -211,11 +217,26 @@ if __name__ == "__main__":
 	galaxCmd = "%s --listfile %s/tree_info/galax_treelist.txt --skip 1000 --outfile %s/tree_info/galax_output" %(galaxPath, outputDir, outputDir)
 	process = subprocess.Popen(galaxCmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, text=True)
 	(out, err) = process.communicate()
-
+	# Get Ipct numbers from Galax output file
+	ipctDict = extractIpct("%s/tree_info/galax_output.txt" % outputDir)
 	logOutput(log, logFile, "Galax finished.\n---------------------------")
 
+	# Format JS data file
+	with open("%s/tree_info/genedata.js" % outputDir, "w") as outfile:
+		outfile.write("var pairs = [\n")
+		for locuspair in margLikelihoodDict:
+			outfile.write("{gene1:%s, gene2:%s, symtopo:%s, symtree:%s, apotree1:%s, apotree2:%s},\n" % (margLikelihoodDict[locuspair]["gene1"], margLikelihoodDict[locuspair]["gene2"], margLikelihoodDict[locuspair]["concat_brlenUnlinked_ln"], margLikelihoodDict[locuspair]["concat_brlenLinked_ln"], margLikelihoodDict[locuspair]["gene1_ln"], margLikelihoodDict[locuspair]["gene2_ln"]))
+		outfile.write("]\n\n")
+		outfile.write("var genes = [\n")
+		for gene in ipctDict:
+			outfile.write("{name:%s, chunk:1, ipct:%s, seqlen:100},\n" %(gene, ipctDict[gene]))
+		outfile.write("]\n\n")
+		outfile.write("var num_genes = %d\n" %(len(ipctDict.keys())))
 
+	logOutput(log, logFile, "All data written to %s/tree_info/genedata.js" % outputDir)
 
-
-
+	# Write HTML
+	writeHTML("%s/results.html" % outputDir, margLikelihoodDict, ipctDict)
+	logOutput(log, logFile, "Final results written to %s/results.html\n---------------------------" % outputDir)
+	logOutput(log, logFile, "BPIC finished successfully.\n---------------------------" % outputDir)
 #			#
