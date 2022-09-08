@@ -238,5 +238,5 @@ if __name__ == "__main__":
 	# Write HTML
 	writeHTML("%s/results.html" % outputDir, margLikelihoodDict, ipctDict)
 	logOutput(log, logFile, "Final results written to %s/results.html\n---------------------------" % outputDir)
-	logOutput(log, logFile, "BPIC finished successfully.\n---------------------------" % outputDir)
+	logOutput(log, logFile, "BPIC finished successfully.\n---------------------------")
 #			#
