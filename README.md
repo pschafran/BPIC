@@ -1,12 +1,14 @@
 # Bayesian Phylogenetic Information Content
 
 #### Dev Notes:
-* Only tested on macOS Monterey (12.4), zsh shell, Python 3.8.5
+* Test files run up to: getting marginal likelihood and Galax output
+* Only tested on: 1) macOS Monterey (12.4), zsh shell, Python 3.8.5; 2) Ubuntu 14.04, bash shell, Python 3.7.6
 * Locus-based file arrangement untested
 
 #### To Do
 * Add CDS option for coding site partitioning
 * Ability to continue partially run analyses
+* Add options for processing AA seqs
 
 ## Overview
 Script for batch processing of homologous loci for up to 12 taxa to calculate Bayesian phylogenetic information content in the data. Steps:
