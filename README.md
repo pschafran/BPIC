@@ -49,6 +49,12 @@ Alternatively, paths can be provided on the command line when the program is run
 BPIC.py -i input_files -o output -f taxon --mafft-path /Users/peter/opt/miniconda3/bin/mafft --mrbayes-path /opt/homebrew/bin/mb ...
 
 ```
+## Test Run
+Once dependencies are installed and/or linked, you can test everything it working with the files included in the `test` directory. It takes about 5 minutes to run with 12 threads on our server, or about 5 minutes to run with 4 threads on a MacBook Air.
+```
+cd BPIC/test
+../BPIC.py -i . -o output -t 4 -f taxon
+```
 
 ## Input Data Formatting
 Input data can be a FASTA file for each taxon containing one sequence for each locus, or a FASTA a file for each locus containing one sequence per taxon. In either case, sequence names must be identical across files for each taxon/locus. Example formatting below:
