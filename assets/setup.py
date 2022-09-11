@@ -63,7 +63,7 @@ Advanced
 	clustalPath = ""
 	galaxPath = ""
 	mrBayesNST = 6
-	mrBayesRates = "invgamma"
+	mrBayesRates = "gamma"
 	mrBayesNgen = 10000000
 	mrBayesBurninFrac = 0.25
 	mrBayesSampleFreq = 1000

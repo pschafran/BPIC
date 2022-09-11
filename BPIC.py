@@ -196,17 +196,23 @@ if __name__ == "__main__":
 	# { locus1-locus2 : {"gene1": locus1, "gene2": locus2, "concat_brlenUnlinked_ln": concat_brlenUnlinked_ln, "concat_brlenLinked_ln": concat_brlenLinked_ln, "gene1_ln": gene1_ln, "gene2_ln": gene2_ln},\
 	#   locus1-locus3 : {...},\
 	#   locus1-locus4 : {...} }
-	with open("%s/tree_info/marginal_likelihoods.txt" % outputDir, "w") as outfile:
+	with open("%s/tree_info/marginal_likelihoods.csv" % outputDir, "w") as outfile:
+		outfile.write("Locus 1,Locus 2,Concatenated BrLen Unlinked (lnL),Concatenated BrLen Linked (lnL),Sum of Separate Trees (lnL),Winner\n")
 		for locus1 in locusList:
 			for locus2 in locusList:
 				if "%s-%s" %(locus1,locus2) in concatLocusList:
-					 concat_brlenUnlinked_ln = extractMargLik("%s/alignments/nexus/%s-%s_brlen-unlinked.nex.log" %(outputDir,locus1,locus2))
-					 concat_brlenLinked_ln = extractMargLik("%s/alignments/nexus/%s-%s_brlen-linked.nex.log" %(outputDir,locus1,locus2))
-					 gene1_ln = extractMargLik("%s/alignments/nexus/%s.nex.log" %(outputDir,locus1))
-					 gene2_ln = extractMargLik("%s/alignments/nexus/%s.nex.log" %(outputDir,locus2))
-					 margLikelihoodDict.update({"%s-%s" %(locus1,locus2) : {"gene1": locus1, "gene2": locus2, "concat_brlenUnlinked_ln": concat_brlenUnlinked_ln, "concat_brlenLinked_ln": concat_brlenLinked_ln, "gene1_ln": gene1_ln, "gene2_ln": gene2_ln}})
-					 outfile.write("{gene1: %s, gene2: %s, concat_brlenUnlinked_ln: %s, concat_brlenLinked_ln: %s, gene1_ln: %s, gene2_ln: %s},\n" %(locus1,locus2,concat_brlenUnlinked_ln, concat_brlenLinked_ln, gene1_ln, gene2_ln))
-	logOutput(log, logFile, "Marginal likelihoods written to %s/tree_info/marginal_likelihoods.txt" % outputDir)
+					concat_brlenUnlinked_ln = extractMargLik("%s/alignments/nexus/%s-%s_brlen-unlinked.nex.log" %(outputDir,locus1,locus2))
+					concat_brlenLinked_ln = extractMargLik("%s/alignments/nexus/%s-%s_brlen-linked.nex.log" %(outputDir,locus1,locus2))
+					gene1_ln = extractMargLik("%s/alignments/nexus/%s.nex.log" %(outputDir,locus1))
+					gene2_ln = extractMargLik("%s/alignments/nexus/%s.nex.log" %(outputDir,locus2))
+					margLikelihoodDict.update({"%s-%s" %(locus1,locus2) : {"gene1": locus1, "gene2": locus2, "concat_brlenUnlinked_ln": concat_brlenUnlinked_ln, "concat_brlenLinked_ln": concat_brlenLinked_ln, "gene1_ln": gene1_ln, "gene2_ln": gene2_ln}})
+					if concat_brlenUnlinked_ln > (gene1_ln + gene2_ln) or concat_brlenLinked_ln > (gene1_ln + gene2_ln):
+						winner = "Concatenated"
+					elif concat_brlenUnlinked_ln < (gene1_ln + gene2_ln) and concat_brlenLinked_ln < (gene1_ln + gene2_ln):
+						winner = "Separate"
+					outfile.write("%s,%s,%s,%s,%s,%s\n" %(locus1, locus2, concat_brlenUnlinked_ln, concat_brlenLinked_ln, gene1_ln + gene2_ln, winner))
+					#outfile.write("gene1: %s, gene2: %s, concat_brlenUnlinked_ln: %s, concat_brlenLinked_ln: %s, gene1_ln: %s, gene2_ln: %s},\n" %(locus1,locus2,concat_brlenUnlinked_ln, concat_brlenLinked_ln, gene1_ln, gene2_ln))
+	logOutput(log, logFile, "Marginal likelihoods written to %s/tree_info/marginal_likelihoods.csv" % outputDir)
 
 	# Run Galax
 	logOutput(log, logFile, "Analyzing trees with Galax...")
@@ -215,8 +221,8 @@ if __name__ == "__main__":
 		for file in treefileList:
 			galaxInputFile.write("%s\n" % file)
 	galaxCmd = "%s --listfile %s/tree_info/galax_treelist.txt --skip 1000 --outfile %s/tree_info/galax_output" %(galaxPath, outputDir, outputDir)
-	process = subprocess.Popen(galaxCmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, text=True)
-	(out, err) = process.communicate()
+	process = subprocess.run(galaxCmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, text=True)
+	#(out, err) = process.communicate()
 	# Get Ipct numbers from Galax output file
 	ipctDict = extractIpct("%s/tree_info/galax_output.txt" % outputDir)
 	logOutput(log, logFile, "Galax finished.\n---------------------------")
