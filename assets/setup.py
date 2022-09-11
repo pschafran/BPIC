@@ -19,10 +19,12 @@ Required parameters
 -f, --format	Input file format (either locus or taxon)
 
 Optional parameters (require a value after the flag)
--a, --aligner	Alignment software (either mafft or clustal; default: mafft)
+-a, --aligner	Alignment software (Options: mafft or clustal ; Default: mafft)
 -l, --log	Log file name. File includes more details than screen output (default: printed to screen/STDOUT)
 -o, --output	Output directory name (default: output)
 -t, --threads	Maximum number of threads to use (default: 1)
+--continue	Resume a previous incomplete run from either alignment or MrBayes stage (Options: align or mrbayes ; Default: off)
+
 
 Optional flags (do not require a value after the flag)
 --CDS	Partition MrBayes analysis by coding site
@@ -48,7 +50,7 @@ Advanced
 --galax-path	Path to Galax executable
 '''
 
-	acceptedParameters = ["-i","--input","-f","--format","-a","--aligner","-t","--threads","-o","--output","--force","--CDS","-h","--help","-v","--version","-c","--cite","--mrbayes-path","--mafft-path","--clustal-path","--galax-path", "--mrbayes-nst", "--mrbayes-rates", "--mrbayes-ngen", "--mrbayes-burninfrac", "--mrbayes-samplefreq", "--mrbayes-nsteps"]
+	acceptedParameters = ["-i","--input","-f","--format","-a","--aligner","-t","--threads","-o","--output","--force","--CDS","--continue","-h","--help","-v","--version","-c","--cite","--mrbayes-path","--mafft-path","--clustal-path","--galax-path", "--mrbayes-nst", "--mrbayes-rates", "--mrbayes-ngen", "--mrbayes-burninfrac", "--mrbayes-samplefreq", "--mrbayes-nsteps"]
 
 	# Set default parameters
 	aligner = "mafft"
@@ -56,6 +58,8 @@ Advanced
 	threads = 1
 	forceOverwrite = False
 	CDS = False
+	continueRun = False
+	continuePoint = None
 	log = False
 	logFile = "null"
 	mrBayesPath = ""
@@ -86,12 +90,17 @@ Advanced
 	if "-f" not in commandline and "--format" not in commandline:
 		print("ERROR: Input file format not specified.")
 		exit(1)
+	if "--force" in commandline and "--continue" in commandline:
+		print("ERROR: Incompatible options --continue and --force.")
+		exit(1)
 	if "--force" in commandline:
 		forceOverwrite = True
 	if forceOverwrite == True and "-o" not in commandline and "--output" not in commandline:
 		shutil.rmtree("output")
 	if "--CDS" in commandline:
 		CDS = True
+	if "--continue" in commandline:
+		continueRun = True
 	i = 0
 	for parameter in commandline[i:]:
 		if parameter in ["-i","--input"]:
@@ -114,10 +123,10 @@ Advanced
 			logFile = commandline[i+1]
 		if parameter in ["-o","--output"]:
 			outputDir = commandline[i+1]
-			if os.path.isdir(outputDir) and forceOverwrite == False:
-				print("ERROR: Output directory already exists. Delete directory or set --force to overwrite.")
+			if os.path.isdir(outputDir) and forceOverwrite == False and continueRun == False:
+				print("ERROR: Output directory already exists. Delete directory or set --force to overwrite or --continue to resume a previous run.")
 				exit(1)
-			elif os.path.isdir(outputDir) and forceOverwrite == True:
+			elif os.path.isdir(outputDir) and forceOverwrite == True and continueRun == False:
 				shutil.rmtree(outputDir)
 		if parameter in ["-t","--threads"]:
 			threads = int(commandline[i+1])
@@ -141,12 +150,31 @@ Advanced
 			mrBayesSampleFreq = commandline[i+1]
 		if parameter == "--mrbayes-nsteps":
 			mrBayesNsteps = commandline[i+1]
+		if parameter == "--continue":
+			continuePoint = commandline[i+1]
+			if continuePoint not in ["align","mrbayes"]:
+				print("ERROR: Must specify 'align' or 'mrbayes' as starting point to continue.")
+				exit(1)
+			if continuePoint == "align":
+				try:
+					shutil.rmtree("%s/alignments/nexus" % outputDir)
+				except:
+					pass
+				try:
+					shutil.rmtree("%s/tree_info" % outputDir)
+				except:
+					pass
+			elif continuePoint == "mrbayes":
+				try:
+					shutil.rmtree("%s/tree_info" % outputDir)
+				except:
+					pass
 
 		# Replace base logFile name with outputDir + logFile after whole command line is read
 		if log == True:
 			logFile = "%s/%s" %(outputDir,logFile)
 		i += 1
-	parameterDict = {"inputDir" : inputDir, "fileFormat" : fileFormat, "aligner" : aligner, "forceOverwrite" : forceOverwrite, "CDS" : CDS, "log" : log, "logFile" : logFile, "outputDir" : outputDir, "threads" : threads, "mrBayesPath" : mrBayesPath, "mafftPath" : mafftPath, "clustalPath" : clustalPath, "galaxPath" : galaxPath, "mrBayesNST" : mrBayesNST, "mrBayesRates" : mrBayesRates, "mrBayesNgen" : mrBayesNgen, "mrBayesBurninFrac" : mrBayesBurninFrac, "mrBayesSampleFreq" : mrBayesSampleFreq, "mrBayesNsteps" : mrBayesNsteps }
+	parameterDict = {"inputDir" : inputDir, "fileFormat" : fileFormat, "aligner" : aligner, "forceOverwrite" : forceOverwrite, "CDS" : CDS, "continueRun" : continueRun, "continuePoint" : continuePoint, "log" : log, "logFile" : logFile, "outputDir" : outputDir, "threads" : threads, "mrBayesPath" : mrBayesPath, "mafftPath" : mafftPath, "clustalPath" : clustalPath, "galaxPath" : galaxPath, "mrBayesNST" : mrBayesNST, "mrBayesRates" : mrBayesRates, "mrBayesNgen" : mrBayesNgen, "mrBayesBurninFrac" : mrBayesBurninFrac, "mrBayesSampleFreq" : mrBayesSampleFreq, "mrBayesNsteps" : mrBayesNsteps }
 	return parameterDict
 
 def checkDependencies(aligner, mrBayes, mafft, clustal, galax, dependencyDir, log = False, logFile = "null"):

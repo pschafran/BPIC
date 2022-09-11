@@ -1,25 +1,43 @@
 # Setup functions
 import subprocess
+import sys
+import os
 from Bio import SeqIO
 from Bio import AlignIO
 
-def clustalAlign(clustalPath, seqFile, outputDir, threads):
-	filename = seqFile.split("/")[-1]
-	locus = ".".join(filename.split(".")[0:-1])
-	clustal_cline = "%s --auto --threads %s --in %s --out %s/alignments/%s.fasta" %(clustalPath, threads, seqFile, outputDir, locus)
-	process = subprocess.run(clustal_cline, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, text=True)
+def clustalAlign(fileList, clustalPath, outputDir, threads, totalFiles, fileCounter):
+	for file in fileList:
+		filename = file.split("/")[-1]
+		locus = ".".join(filename.split(".")[0:-1])
+		clustal_cline = "%s --auto --threads %s --in %s --out %s/alignments/%s.fasta" %(clustalPath, threads, file, outputDir, locus)
+		process = subprocess.run(clustal_cline, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, text=True)
+		#Progress bar
+		completionPerc = int(float(100*fileCounter)/float(totalFiles))
+		sys.stdout.write('\r')
+		sys.stdout.write("[%-100s] %d%%" % ('='*completionPerc, completionPerc))
+		sys.stdout.flush()
+		fileCounter+=1
+	sys.stdout.write('\n')
 	#process.wait()
 	#(out, err) = process.communicate() #the stdout and stderr
 
-def mafftAlign(mafftPath, seqFile, outputDir, threads):
-	filename = seqFile.split("/")[-1]
-	locus = ".".join(filename.split(".")[0:-1])
-	mafft_cline = "%s --auto --thread %s %s > %s/alignments/%s.fasta" %(mafftPath, threads, seqFile, outputDir, locus)
-	process = subprocess.run(mafft_cline, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, text=True)
+def mafftAlign(fileList, mafftPath, outputDir, threads, totalFiles, fileCounter):
+	for file in fileList:
+		filename = file.split("/")[-1]
+		locus = ".".join(filename.split(".")[0:-1])
+		mafft_cline = "%s --auto --thread %s %s > %s/alignments/%s.fasta" %(mafftPath, threads, file, outputDir, locus)
+		process = subprocess.run(mafft_cline, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, text=True)
+		#Progress bar
+		completionPerc = int(float(100*fileCounter)/float(totalFiles))
+		sys.stdout.write('\r')
+		sys.stdout.write("[%-100s] %d%%" % ('='*completionPerc, completionPerc))
+		sys.stdout.flush()
+		fileCounter+=1
+	sys.stdout.write('\n')
 	#process.wait()
 	#(out, err) = process.communicate() #the stdout and stderr
 
-def convertFastaToNexus(inputFile, outputDir, CDS, mrBayesNST = 6, mrBayesRates = "gamma", mrBayesNgen = 10000000, mrBayesBurninFrac = 0.25, mrBayesSampleFreq = 1000, mrBayesNsteps = 30, threads = 1 ):
+def convertFastaToNexus(inputFile, outputDir, CDS, mrBayesNST = 6, mrBayesRates = "gamma", mrBayesNgen = 10000000, mrBayesSampleFreq = 1000, mrBayesNsteps = 30, threads = 1 ):
 	filename = inputFile.split("/")[-1]
 	locus = ".".join(filename.split(".")[0:-1])
 	AlignIO.convert(inputFile, "fasta", "%s/alignments/nexus/%s.nex" %(outputDir,locus), "nexus", molecule_type = "DNA")
@@ -80,7 +98,7 @@ def convertFastaToNexus(inputFile, outputDir, CDS, mrBayesNST = 6, mrBayesRates 
 		outfile.write("end;\n")
 		outfile.close()
 
-def concatenateAlignments(aln1, aln2, outputDir, CDS, mrBayesNST = 6, mrBayesRates = "gamma", mrBayesNgen = 10000000, mrBayesBurninFrac = 0.25, mrBayesSampleFreq = 1000, mrBayesNsteps = 30, threads = 1 ):
+def concatenateAlignments(aln1, aln2, outputDir, CDS, mrBayesNST = 6, mrBayesRates = "gamma", mrBayesNgen = 10000000, mrBayesSampleFreq = 1000, mrBayesNsteps = 30, threads = 1 ):
 	filename1 = aln1.split("/")[-1]
 	locus1 = ".".join(filename1.split(".")[0:-1])
 	filename2 = aln2.split("/")[-1]
