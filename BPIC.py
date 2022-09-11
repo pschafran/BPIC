@@ -127,7 +127,7 @@ if __name__ == "__main__":
 
 	# Align files
 	alignFileList = [ file for file in glob.glob("%s/sequence_files/*.fasta" % outputDir) ]
-	totalFiles = len(fileList)
+	totalFiles = len(alignFileList)
 	fileCounter = 1
 	if continueRun == False:
 		os.mkdir("%s/alignments" %(outputDir))
@@ -263,16 +263,18 @@ if __name__ == "__main__":
 		for locus1 in locusList:
 			for locus2 in locusList:
 				if "%s-%s" %(locus1,locus2) in concatLocusList:
+					winner = None
 					concat_brlenUnlinked_ln = extractMargLik("%s/alignments/nexus/%s-%s_brlen-unlinked.nex.log" %(outputDir,locus1,locus2))
 					concat_brlenLinked_ln = extractMargLik("%s/alignments/nexus/%s-%s_brlen-linked.nex.log" %(outputDir,locus1,locus2))
 					gene1_ln = extractMargLik("%s/alignments/nexus/%s.nex.log" %(outputDir,locus1))
 					gene2_ln = extractMargLik("%s/alignments/nexus/%s.nex.log" %(outputDir,locus2))
 					margLikelihoodDict.update({"%s-%s" %(locus1,locus2) : {"gene1": locus1, "gene2": locus2, "concat_brlenUnlinked_ln": concat_brlenUnlinked_ln, "concat_brlenLinked_ln": concat_brlenLinked_ln, "gene1_ln": gene1_ln, "gene2_ln": gene2_ln}})
-					if concat_brlenUnlinked_ln > (gene1_ln + gene2_ln) or concat_brlenLinked_ln > (gene1_ln + gene2_ln):
+					combinedln = float(gene1_ln) + float(gene2_ln)
+					if concat_brlenUnlinked_ln > combinedln or concat_brlenLinked_ln > combinedln:
 						winner = "Concatenated"
-					elif concat_brlenUnlinked_ln < (gene1_ln + gene2_ln) and concat_brlenLinked_ln < (gene1_ln + gene2_ln):
+					elif concat_brlenUnlinked_ln < combinedln and concat_brlenLinked_ln < combinedln:
 						winner = "Separate"
-					outfile.write("%s,%s,%s,%s,%s,%s\n" %(locus1, locus2, concat_brlenUnlinked_ln, concat_brlenLinked_ln, gene1_ln + gene2_ln, winner))
+					outfile.write("%s,%s,%s,%s,%s,%s\n" %(locus1, locus2, concat_brlenUnlinked_ln, concat_brlenLinked_ln, combinedln, winner))
 					#outfile.write("gene1: %s, gene2: %s, concat_brlenUnlinked_ln: %s, concat_brlenLinked_ln: %s, gene1_ln: %s, gene2_ln: %s},\n" %(locus1,locus2,concat_brlenUnlinked_ln, concat_brlenLinked_ln, gene1_ln, gene2_ln))
 	logOutput(log, logFile, "Marginal likelihoods written to %s/tree_info/marginal_likelihoods.csv" % outputDir)
 

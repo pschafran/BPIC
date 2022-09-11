@@ -21,7 +21,7 @@ def extractMargLik(mbLogFile):
 			cleanline = list(filter(None,splitline))
 			ln = cleanline[1]
 		linecounter += 1
-	return ln
+	return float(ln)
 
 def extractIpct(galaxOutFile):
 	linecounter = 1
