@@ -8,7 +8,7 @@ from Bio import SeqIO
 def checkArgs(commandline):
 	cite = '''
 By: Peter W. Schafran
-Last Updated: 2022 September 9
+Last Updated: 2022 September 12
 https://github.com/pschafran/BPIC
 	'''
 	version = "0.1"

@@ -24,7 +24,7 @@ from collections import Counter
 
 cite = '''
 By: Peter W. Schafran
-Last Updated: 2022 September 9
+Last Updated: 2022 September 12
 https://github.com/pschafran/BPIC
 '''
 version = "0.1"
@@ -185,12 +185,12 @@ if __name__ == "__main__":
 	logOutput(log, logFile, "Concatenation finished.\n---------------------------")
 
 	# Generate Trees
-	logOutput(log, logFile, "Generating marginal likelihood trees...")
 	fileList = [ file for file in glob.glob("%s/alignments/nexus/*.nex" % outputDir) if os.path.isfile(file) ]
 	totalFiles = len(fileList)
 	#fileCounter = 1
 	mbCmdList = []
 	if continueRun == False or (continueRun == True and continuePoint == "align"):
+		logOutput(log, logFile, "Generating marginal likelihood trees...")
 		for file in sorted(fileList):
 			mbCmdList.append("%s %s" %(mrBayesPath, file))
 		with multiprocessing.Pool(threads) as pool:
@@ -201,10 +201,19 @@ if __name__ == "__main__":
 				sys.stdout.write("[%-100s] %d%%" % ('='*completionPerc, completionPerc))
 				sys.stdout.flush()
 			sys.stdout.write('\n')
+	# If continuing, check if MrBayes run completed (ran sump), if not delete all partial files except the nexus alignment
 	elif continueRun == True and continuePoint == "mrbayes":
+		logOutput(log, logFile, "Resuming making marginal likelihood trees...")
+		fileCounter = 1
 		for file in sorted(fileList):
 			if os.path.isfile("%s.pstat" % file):
 				fileList.remove(file)
+				fileCounter += 1
+			else:
+				for deleteFile in glob.glob("%s.*" %file):
+					if deleteFile.split(".")[-1] != "nex":
+						logOutput(log, logFile, "Deleting partial file: %s" % deleteFile)
+						os.rm(deleteFile)
 		for file in sorted(fileList):
 			mbCmdList.append("%s %s" %(mrBayesPath, file))
 		filecounter = totalFiles - len(mbCmdList)
@@ -291,17 +300,17 @@ if __name__ == "__main__":
 	ipctDict = extractIpct("%s/tree_info/galax_output.txt" % outputDir)
 	logOutput(log, logFile, "Galax finished.\n---------------------------")
 
-	# Format JS data file
-	with open("%s/tree_info/genedata.js" % outputDir, "w") as outfile:
-		outfile.write("var pairs = [\n")
-		for locuspair in margLikelihoodDict:
-			outfile.write("{gene1:%s, gene2:%s, symtopo:%s, symtree:%s, apotree1:%s, apotree2:%s},\n" % (margLikelihoodDict[locuspair]["gene1"], margLikelihoodDict[locuspair]["gene2"], margLikelihoodDict[locuspair]["concat_brlenUnlinked_ln"], margLikelihoodDict[locuspair]["concat_brlenLinked_ln"], margLikelihoodDict[locuspair]["gene1_ln"], margLikelihoodDict[locuspair]["gene2_ln"]))
-		outfile.write("]\n\n")
-		outfile.write("var genes = [\n")
-		for gene in ipctDict:
-			outfile.write("{name:%s, chunk:1, ipct:%s, seqlen:100},\n" %(gene, ipctDict[gene]))
-		outfile.write("]\n\n")
-		outfile.write("var num_genes = %d\n" %(len(ipctDict.keys())))
+	# Format JS data file ### No longer needed
+	#with open("%s/tree_info/genedata.js" % outputDir, "w") as outfile:
+	#	outfile.write("var pairs = [\n")
+	#	for locuspair in margLikelihoodDict:
+	#		outfile.write("{gene1:%s, gene2:%s, symtopo:%s, symtree:%s, apotree1:%s, apotree2:%s},\n" % (margLikelihoodDict[locuspair]["gene1"], margLikelihoodDict[locuspair]["gene2"], margLikelihoodDict[locuspair]["concat_brlenUnlinked_ln"], margLikelihoodDict[locuspair]["concat_brlenLinked_ln"], margLikelihoodDict[locuspair]["gene1_ln"], margLikelihoodDict[locuspair]["gene2_ln"]))
+	#	outfile.write("]\n\n")
+	#	outfile.write("var genes = [\n")
+	#	for gene in ipctDict:
+	#		outfile.write("{name:%s, chunk:1, ipct:%s, seqlen:100},\n" %(gene, ipctDict[gene]))
+	#	outfile.write("]\n\n")
+	#	outfile.write("var num_genes = %d\n" %(len(ipctDict.keys())))
 
 	logOutput(log, logFile, "All data written to %s/tree_info/genedata.js" % outputDir)
 
