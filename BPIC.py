@@ -213,7 +213,7 @@ if __name__ == "__main__":
 				for deleteFile in glob.glob("%s.*" %file):
 					if deleteFile.split(".")[-1] != "nex":
 						logOutput(log, logFile, "Deleting partial file: %s" % deleteFile)
-						os.rm(deleteFile)
+						os.remove(deleteFile)
 		for file in sorted(fileList):
 			mbCmdList.append("%s %s" %(mrBayesPath, file))
 		filecounter = totalFiles - len(mbCmdList)
