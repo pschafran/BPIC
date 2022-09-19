@@ -34,7 +34,7 @@ MrBayes Parameters -v alues must be recognized by MrBayes (see https://nbisweden
 --mrbayes-nst	Substitution model
 --mrbayes-rates	Model for among-site rate variation
 --mrbayes-ngen	Number of cycles for MCMC
---mrbayes-burninfrac	Proportion of samples to be discarded for convergence calculation (burn-in)
+--mrbayes-burninfrac	Proportion of samples to be discarded for convergence calculation (burn-in) [ DEPRECATED ]
 --mrbayes-samplefreq	How often to sample the Markov chain
 --mrbayes-nsteps	Number of steps in the stepping-stone analysis
 
@@ -97,6 +97,9 @@ Advanced
 		forceOverwrite = True
 	if forceOverwrite == True and "-o" not in commandline and "--output" not in commandline:
 		shutil.rmtree("output")
+	if forceOverwrite == False and "-o" not in commandline and "--output" not in commandline and os.path.isdir(outputDir):
+		print("ERROR: Output directory already exists. Delete directory or set --force to overwrite or --continue to resume a previous run.")
+		exit(1)
 	if "--CDS" in commandline:
 		CDS = True
 	if "--continue" in commandline:

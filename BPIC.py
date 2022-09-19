@@ -169,8 +169,10 @@ if __name__ == "__main__":
 	#		os.mkdir("%s/alignments/nexus/information_content" % outputDir)
 	fileList = [ file for file in glob.glob("%s/alignments/*.fasta" % outputDir) if os.path.isfile(file) ]
 	logOutput(log, logFile, "Converting alignments...")
+	locusLengthDict = {}
 	for file in fileList:
-		convertFastaToNexus(file, outputDir, CDS, mrBayesNST, mrBayesRates, mrBayesNgen, mrBayesSampleFreq, mrBayesNsteps, threads)
+		locus,nchar = convertFastaToNexus(file, outputDir, CDS, mrBayesNST, mrBayesRates, mrBayesNgen, mrBayesSampleFreq, mrBayesNsteps, threads)
+		locusLengthDict.update({locus : nchar})
 	logOutput(log, logFile, "Conversion finished.\n---------------------------")
 
 	# Concatenate alignments
@@ -217,6 +219,7 @@ if __name__ == "__main__":
 		for file in sorted(fileList):
 			mbCmdList.append("%s %s" %(mrBayesPath, file))
 		filecounter = totalFiles - len(mbCmdList)
+		logOutput(log, logFile, "Resuming making marginal likelihood trees...")
 		with multiprocessing.Pool(threads) as pool:
 			for count,value in enumerate(pool.imap(mrBayes,mbCmdList)):
 				#Progress bar
@@ -315,7 +318,7 @@ if __name__ == "__main__":
 	logOutput(log, logFile, "All data written to %s/tree_info/genedata.js" % outputDir)
 
 	# Write HTML
-	writeHTML("%s/results.html" % outputDir, margLikelihoodDict, ipctDict)
+	writeHTML("%s/results.html" % outputDir, margLikelihoodDict, ipctDict, locusLengthDict)
 	logOutput(log, logFile, "Final results written to %s/results.html\n---------------------------" % outputDir)
 	logOutput(log, logFile, "BPIC finished successfully.\n---------------------------")
 #			#

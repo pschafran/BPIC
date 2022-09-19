@@ -67,6 +67,7 @@ def convertFastaToNexus(inputFile, outputDir, CDS, mrBayesNST = 6, mrBayesRates 
 			outfile.write("prset ratepr=dirichlet(10.0,10.0,10.0);\n")
 		else:
 			outfile.write("prset ratepr=dirichlet(10.0);\n")
+		outfile.write("set seed=9223 swapseed=9223;")
 		outfile.write("lset applyto=(all) nst=%s ngammacat=4 rates=%s;\n" %(mrBayesNST, mrBayesRates))
 		outfile.write("prset applyto=(all) statefreqpr=dirichlet(10.0,10.0,10.0,10.0) revmatpr=dirichlet(10.0,20.0,10.0,10.0,20.0,10.0) brlenspr=Unconstrained:GammaDir(1.0,0.100,1.0,1.0) shapepr=exponential(1.0);\n")
 		outfile.write("mcmcp ngen=%s samplefreq=%s printfreq=%s nruns=1 starttree=random nchains=1 savebrlens=yes;\n" %(mrBayesNgen, mrBayesSampleFreq, mrBayesNgen))
@@ -91,12 +92,14 @@ def convertFastaToNexus(inputFile, outputDir, CDS, mrBayesNST = 6, mrBayesRates 
 		else:
 			outfile.write("prset ratepr=dirichlet(10.0);\n")
 		outfile.write("lset applyto=(all) nst=%s ngammacat=4 rates=%s;\n" %(mrBayesNST, mrBayesRates))
+		outfile.write("set seed=9223 swapseed=9223;")
 		outfile.write("prset applyto=(all) statefreqpr=dirichlet(10.0,10.0,10.0,10.0) revmatpr=dirichlet(10.0,20.0,10.0,10.0,20.0,10.0) brlenspr=Unconstrained:GammaDir(1.0,0.100,1.0,1.0) shapepr=exponential(1.0);\n")
 		outfile.write("mcmc ngen=%s samplefreq=%s printfreq=%s nruns=1 starttree=random nchains=1 savebrlens=yes;\n" %(mrBayesNgen, mrBayesSampleFreq, mrBayesNgen))
 		outfile.write("sumt;\n")
 		outfile.write("sump;\n")
 		outfile.write("end;\n")
 		outfile.close()
+	return locus,nchar
 
 def concatenateAlignments(aln1, aln2, outputDir, CDS, mrBayesNST = 6, mrBayesRates = "gamma", mrBayesNgen = 10000000, mrBayesSampleFreq = 1000, mrBayesNsteps = 30, threads = 1 ):
 	filename1 = aln1.split("/")[-1]
@@ -175,6 +178,7 @@ def concatenateAlignments(aln1, aln2, outputDir, CDS, mrBayesNST = 6, mrBayesRat
 		outfile.write("set partition = cds;\n")
 		outfile.write("prset ratepr=dirichlet(10.0,10.0,10.0,10.0,10.0,10.0);\n")
 	outfile.write("lset applyto=(all) nst=%s ngammacat=4 rates=%s;\n" %(mrBayesNST, mrBayesRates))
+	outfile.write("set seed=9223 swapseed=9223;")
 	outfile.write("prset applyto=(all) statefreqpr=dirichlet(10.0,10.0,10.0,10.0) revmatpr=dirichlet(10.0,20.0,10.0,10.0,20.0,10.0) brlenspr=Unconstrained:GammaDir(1.0,0.100,1.0,1.0) shapepr=exponential(1.0);\n")
 	outfile.write("mcmcp ngen=%s samplefreq=%s printfreq=%s nruns=1 starttree=random nchains=1 savebrlens=yes;\n" %(mrBayesNgen, mrBayesSampleFreq, mrBayesNgen))
 	outfile.write("unlink shape=(all) statefreq=(all) revmat=(all);\n")
@@ -223,6 +227,7 @@ def concatenateAlignments(aln1, aln2, outputDir, CDS, mrBayesNST = 6, mrBayesRat
 		outfile.write("link brlens=(4,5,6);\n")
 		outfile.write("prset ratepr=dirichlet(10.0,10.0,10.0,10.0,10.0,10.0);\n")
 	outfile.write("lset applyto=(all) nst=%s ngammacat=4 rates=%s;\n" %(mrBayesNST, mrBayesRates))
+	outfile.write("set seed=9223 swapseed=9223;")
 	outfile.write("prset applyto=(all) statefreqpr=dirichlet(10.0,10.0,10.0,10.0) revmatpr=dirichlet(10.0,20.0,10.0,10.0,20.0,10.0) brlenspr=Unconstrained:GammaDir(1.0,0.100,1.0,1.0) shapepr=exponential(1.0);\n")
 	outfile.write("mcmcp ngen=%s samplefreq=%s printfreq=%s nruns=1 starttree=random nchains=1 savebrlens=yes;\n" %(mrBayesNgen, mrBayesSampleFreq, mrBayesNgen))
 	outfile.write("ss alpha=0.3 nsteps=%s burninss=-2;\n" % mrBayesNsteps)

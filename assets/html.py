@@ -1,6 +1,6 @@
 # HTML and JS functions
 
-def writeHTML(file, margLikelihoodDict, ipctDict):
+def writeHTML(file, margLikelihoodDict, ipctDict, locusLengthDict):
 	with open(file, "w") as outfile:
 		outfile.write('''<!DOCTYPE html>
 <html lang="en">
@@ -59,7 +59,7 @@ def writeHTML(file, margLikelihoodDict, ipctDict):
 			var genes = [''')
 		for gene in ipctDict:
 			outfile.write('''
-			{name:"%s", chunk:1, ipct:%s, seqlen:100},''' %(gene, ipctDict[gene]))
+			{name:"%s", chunk:1, ipct:%s, seqlen:%s},''' %(gene, ipctDict[gene], locusLengthDict[gene]))
 		outfile.write('''
 			]\n''')
 		outfile.write('''
