@@ -9,6 +9,7 @@
 * Add CDS option for coding site partitioning
 * Ability to continue partially run analyses
 * Add options for processing AA seqs
+* Fix overlapping genes in results.html
 
 ## Overview
 Script for batch processing of homologous loci for up to ~12 taxa to calculate Bayesian phylogenetic information content in the data. Steps:
@@ -20,15 +21,22 @@ Script for batch processing of homologous loci for up to ~12 taxa to calculate B
 
 ## Installation
 Clone github repo
+```
+git clone https://github.com/pschafran/BPIC.git
+```
 
 #### Dependencies
 * Python >= 3.X
 * BioPython [https://biopython.org/](https://biopython.org/)
+* ETE Toolkit [http://etetoolkit.org/download/](http://etetoolkit.org/download/)
 * MAFFT [https://mafft.cbrc.jp/alignment/software/](https://mafft.cbrc.jp/alignment/software/) and/or Clustal Omega [http://www.clustal.org/omega/](http://www.clustal.org/omega/)
 * MrBayes [https://nbisweden.github.io/MrBayes/download.html](https://nbisweden.github.io/MrBayes/download.html)
 * Galax [https://github.com/plewis/galax](https://github.com/plewis/galax)
 
-In my experience, using Conda to install MAFFT and Clustal Omega works, MrBayes works when installed through Homebrew.
+In my experience, using Conda to install MAFFT and Clustal Omega works, MrBayes works best when installed through Homebrew. Installing in a new environment is recommended to avoid conflicts if other conda packages are already installed:
+```
+conda create -n BPIC -c bioconda -c conda-forge -c etetoolkit mafft clustalo ete3 ete_toolchain python=3
+```
 
 The base `BPIC` directory contains an empty directory where you can link dependencies if they are not read directly from the `PATH` variable. In particular, software installed with Conda may not be autodetected by `BPIC`. If you are able to call the program directly in a Terminal, you can do:
 ```  
@@ -136,6 +144,14 @@ Advanced
 --galax-path	Path to Galax executable
 ```
 
+## Runtime
+Runtime is highly dependent on individual system resources (# CPUS, CPU speed) and the number of taxa and genes in the analysis. In my experience, datasets of ~70 genes with 5-10 taxa will take 24-36 hrs on a 24 CPU server.
+
+## Output
+In the output directory,
+
+## MrBayes Bug Workaround
+A bug in MrBayes may cause some analyses of *concatenated genes with unlinked branch lengths* to never finish. These processes can be identified in as "task manager" type process viewer such as `top` or `htop` (recommended) and killed when it is clear they're running much longer than other tree analyses. The program will continue until it ends prematurely with an error. Alternatively, you can kill the main BPIC.py process (Ctrl+C in the main terminal window). Rerun your initial `BPIC` command, adding the `--continue mrbayes` flag. The stuck trees will rerun and usually finish normally; rarely, repeating this process a second time is required. Once all trees are completed, `BPIC` will be able to finish and generate `results.html`.
 
 ## References
 
@@ -144,3 +160,5 @@ Paul O. Lewis, Ming-Hui Chen, Lynn Kuo, Louise A. Lewis, Karolina Fučíková, S
 Suman Neupane, Karolina Fučíková, Louise A Lewis, Lynn Kuo, Ming-Hui Chen, Paul O Lewis, Assessing Combinability of Phylogenomic Data Using Bayes Factors, Systematic Biology, Volume 68, Issue 5, September 2019, Pages 744–754, https://doi.org/10.1093/sysbio/syz007
 
 Galax. https://github.com/plewis/galax
+
+ETE 3: Reconstruction, analysis and visualization of phylogenomic data. Jaime Huerta-Cepas, Francois Serra and Peer Bork. Mol Biol Evol 2016; doi: 10.1093/molbev/msw046

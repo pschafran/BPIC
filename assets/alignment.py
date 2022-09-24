@@ -10,7 +10,7 @@ def clustalAlign(fileList, clustalPath, outputDir, threads, totalFiles, fileCoun
 		filename = file.split("/")[-1]
 		locus = ".".join(filename.split(".")[0:-1])
 		clustal_cline = "%s --auto --threads %s --in %s --out %s/alignments/%s.fasta" %(clustalPath, threads, file, outputDir, locus)
-		process = subprocess.run(clustal_cline, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, text=True)
+		process = subprocess.run(clustal_cline, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, universal_newlines=True)
 		#Progress bar
 		completionPerc = int(float(100*fileCounter)/float(totalFiles))
 		sys.stdout.write('\r')
@@ -26,7 +26,7 @@ def mafftAlign(fileList, mafftPath, outputDir, threads, totalFiles, fileCounter)
 		filename = file.split("/")[-1]
 		locus = ".".join(filename.split(".")[0:-1])
 		mafft_cline = "%s --auto --thread %s %s > %s/alignments/%s.fasta" %(mafftPath, threads, file, outputDir, locus)
-		process = subprocess.run(mafft_cline, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, text=True)
+		process = subprocess.run(mafft_cline, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, universal_newlines=True)
 		#Progress bar
 		completionPerc = int(float(100*fileCounter)/float(totalFiles))
 		sys.stdout.write('\r')
@@ -73,6 +73,7 @@ def convertFastaToNexus(inputFile, outputDir, CDS, mrBayesNST = 6, mrBayesRates 
 		outfile.write("mcmcp ngen=%s samplefreq=%s printfreq=%s nruns=1 starttree=random nchains=1 savebrlens=yes;\n" %(mrBayesNgen, mrBayesSampleFreq, mrBayesNgen))
 		outfile.write("ss alpha=0.3 nsteps=%s burninss=-2;\n" % mrBayesNsteps)
 		outfile.write("sump;\n")
+		outfile.write("sumt conformat=simple;\n")
 		outfile.write("end;\n")
 		outfile.close()
 	with open("%s/alignments/nexus/information_content/%s.nex" %(outputDir,locus), "a") as outfile:
@@ -95,7 +96,7 @@ def convertFastaToNexus(inputFile, outputDir, CDS, mrBayesNST = 6, mrBayesRates 
 		outfile.write("set seed=9223 swapseed=9223;")
 		outfile.write("prset applyto=(all) statefreqpr=dirichlet(10.0,10.0,10.0,10.0) revmatpr=dirichlet(10.0,20.0,10.0,10.0,20.0,10.0) brlenspr=Unconstrained:GammaDir(1.0,0.100,1.0,1.0) shapepr=exponential(1.0);\n")
 		outfile.write("mcmc ngen=%s samplefreq=%s printfreq=%s nruns=1 starttree=random nchains=1 savebrlens=yes;\n" %(mrBayesNgen, mrBayesSampleFreq, mrBayesNgen))
-		outfile.write("sumt;\n")
+		outfile.write("sumt conformat=simple;\n")
 		outfile.write("sump;\n")
 		outfile.write("end;\n")
 		outfile.close()
@@ -183,6 +184,7 @@ def concatenateAlignments(aln1, aln2, outputDir, CDS, mrBayesNST = 6, mrBayesRat
 	outfile.write("mcmcp ngen=%s samplefreq=%s printfreq=%s nruns=1 starttree=random nchains=1 savebrlens=yes;\n" %(mrBayesNgen, mrBayesSampleFreq, mrBayesNgen))
 	outfile.write("unlink shape=(all) statefreq=(all) revmat=(all);\n")
 	outfile.write("ss alpha=0.3 nsteps=%s burninss=-2;\n" % mrBayesNsteps)
+	outfile.write("sumt conformat=simple;\n")
 	outfile.write("sump;\n")
 	#outfile.write("sumt burnin=2500;\n")
 	outfile.write("end;\n")
@@ -231,6 +233,7 @@ def concatenateAlignments(aln1, aln2, outputDir, CDS, mrBayesNST = 6, mrBayesRat
 	outfile.write("prset applyto=(all) statefreqpr=dirichlet(10.0,10.0,10.0,10.0) revmatpr=dirichlet(10.0,20.0,10.0,10.0,20.0,10.0) brlenspr=Unconstrained:GammaDir(1.0,0.100,1.0,1.0) shapepr=exponential(1.0);\n")
 	outfile.write("mcmcp ngen=%s samplefreq=%s printfreq=%s nruns=1 starttree=random nchains=1 savebrlens=yes;\n" %(mrBayesNgen, mrBayesSampleFreq, mrBayesNgen))
 	outfile.write("ss alpha=0.3 nsteps=%s burninss=-2;\n" % mrBayesNsteps)
+	outfile.write("sumt conformat=simple;\n")
 	outfile.write("sump;\n")
 	#outfile.write("sumt burnin=2500;\n")
 	outfile.write("end;\n")

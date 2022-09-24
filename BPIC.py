@@ -17,6 +17,7 @@ from assets.alignment import concatenateAlignments
 from assets.tree import mrBayes
 from assets.tree import extractMargLik
 from assets.tree import extractIpct
+from assets.tree import rfDistance
 from assets.html import writeHTML
 import multiprocessing
 from Bio import SeqIO
@@ -271,7 +272,7 @@ if __name__ == "__main__":
 	#   locus1-locus3 : {...},\
 	#   locus1-locus4 : {...} }
 	with open("%s/tree_info/marginal_likelihoods.csv" % outputDir, "w") as outfile:
-		outfile.write("Locus 1,Locus 2,Concatenated BrLen Unlinked (lnL),Concatenated BrLen Linked (lnL),Sum of Separate Trees (lnL),Winner\n")
+		outfile.write("Locus 1,Locus 2,Concatenated BrLen Unlinked (lnL),Concatenated BrLen Linked (lnL),Sum of Separate Trees (lnL),RF Distance,Winner\n")
 		for locus1 in locusList:
 			for locus2 in locusList:
 				if "%s-%s" %(locus1,locus2) in concatLocusList:
@@ -280,13 +281,14 @@ if __name__ == "__main__":
 					concat_brlenLinked_ln = extractMargLik("%s/alignments/nexus/%s-%s_brlen-linked.nex.log" %(outputDir,locus1,locus2))
 					gene1_ln = extractMargLik("%s/alignments/nexus/%s.nex.log" %(outputDir,locus1))
 					gene2_ln = extractMargLik("%s/alignments/nexus/%s.nex.log" %(outputDir,locus2))
-					margLikelihoodDict.update({"%s-%s" %(locus1,locus2) : {"gene1": locus1, "gene2": locus2, "concat_brlenUnlinked_ln": concat_brlenUnlinked_ln, "concat_brlenLinked_ln": concat_brlenLinked_ln, "gene1_ln": gene1_ln, "gene2_ln": gene2_ln}})
+					rf = rfDistance("%s/alignments/nexus/%s.nex.con.tre" %(outputDir,locus1), "%s/alignments/nexus/%s.nex.con.tre" %(outputDir,locus2))
+					margLikelihoodDict.update({"%s-%s" %(locus1,locus2) : {"gene1": locus1, "gene2": locus2, "concat_brlenUnlinked_ln": concat_brlenUnlinked_ln, "concat_brlenLinked_ln": concat_brlenLinked_ln, "gene1_ln": gene1_ln, "gene2_ln": gene2_ln, "rf_distance" : rf}})
 					combinedln = float(gene1_ln) + float(gene2_ln)
 					if concat_brlenUnlinked_ln > combinedln or concat_brlenLinked_ln > combinedln:
 						winner = "Concatenated"
 					elif concat_brlenUnlinked_ln < combinedln and concat_brlenLinked_ln < combinedln:
 						winner = "Separate"
-					outfile.write("%s,%s,%s,%s,%s,%s\n" %(locus1, locus2, concat_brlenUnlinked_ln, concat_brlenLinked_ln, combinedln, winner))
+					outfile.write("%s,%s,%s,%s,%s,%s,%s\n" %(locus1, locus2, concat_brlenUnlinked_ln, concat_brlenLinked_ln, combinedln, rf, winner))
 					#outfile.write("gene1: %s, gene2: %s, concat_brlenUnlinked_ln: %s, concat_brlenLinked_ln: %s, gene1_ln: %s, gene2_ln: %s},\n" %(locus1,locus2,concat_brlenUnlinked_ln, concat_brlenLinked_ln, gene1_ln, gene2_ln))
 	logOutput(log, logFile, "Marginal likelihoods written to %s/tree_info/marginal_likelihoods.csv" % outputDir)
 
@@ -297,7 +299,7 @@ if __name__ == "__main__":
 		for file in treefileList:
 			galaxInputFile.write("%s\n" % file)
 	galaxCmd = "%s --listfile %s/tree_info/galax_treelist.txt --skip 1000 --outfile %s/tree_info/galax_output" %(galaxPath, outputDir, outputDir)
-	process = subprocess.run(galaxCmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, text=True)
+	process = subprocess.run(galaxCmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, universal_newlines=True)
 	#(out, err) = process.communicate()
 	# Get Ipct numbers from Galax output file
 	ipctDict = extractIpct("%s/tree_info/galax_output.txt" % outputDir)

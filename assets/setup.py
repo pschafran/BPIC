@@ -97,7 +97,7 @@ Advanced
 		forceOverwrite = True
 	if forceOverwrite == True and "-o" not in commandline and "--output" not in commandline:
 		shutil.rmtree("output")
-	if forceOverwrite == False and "-o" not in commandline and "--output" not in commandline and os.path.isdir(outputDir):
+	if forceOverwrite == False and "-o" not in commandline and "--output" not in commandline and os.path.isdir(outputDir) and "--continue" not in commandline:
 		print("ERROR: Output directory already exists. Delete directory or set --force to overwrite or --continue to resume a previous run.")
 		exit(1)
 	if "--CDS" in commandline:

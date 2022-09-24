@@ -1,10 +1,12 @@
 # Tree building functions
 import subprocess
+from ete3 import Tree
+import re
 
 def mrBayes(cmd):
 	file = cmd.split(" ")[-1]
 	logFile = open("%s.log" % file, "w")
-	process = subprocess.run(cmd, stdout=logFile, stderr=subprocess.PIPE, shell=True, text=True)
+	process = subprocess.run(cmd, stdout=logFile, stderr=subprocess.PIPE, shell=True)
 	#(out, err) = process.communicate() #the stdout and stderr
 	logFile.close()
 
@@ -43,3 +45,33 @@ def extractIpct(galaxOutFile):
 				startCapture = True
 		linecounter += 1
 	return captureDict
+
+def extractNexusTree(treefile):
+	with open(treefile, "r") as infile:
+		linecounter = 1
+		capture = False
+		translateDict = {}
+		for line in infile:
+			splitline = line.strip("\n").split(" ")
+			cleanline = list(filter(None,splitline))
+			if len(cleanline) >= 1:
+				if cleanline[0] == ";":
+					capture = False
+				if cleanline[0] == "translate":
+					capture = True
+				if capture == True:
+					translateDict.update({cleanline[0] : cleanline[1].strip(",")})
+				if cleanline[0] == "tree":
+					tree = cleanline[-1]
+					for key in translateDict:
+						re.sub("%s:" % key, "%s:" % translateDict[key], tree)
+	return tree
+
+
+def rfDistance(treefile1, treefile2):
+	t1 = Tree(extractNexusTree(treefile1))
+	t2 = Tree(extractNexusTree(treefile2))
+	out = t1.robinson_foulds(t2, unrooted_trees=True)
+	rf = out[0]
+	rfMax = out[1]
+	return rf
