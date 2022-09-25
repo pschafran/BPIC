@@ -229,7 +229,7 @@ def concatenateAlignments(aln1, aln2, outputDir, CDS, mrBayesNST = 6, mrBayesRat
 		outfile.write("link brlens=(4,5,6);\n")
 		outfile.write("prset ratepr=dirichlet(10.0,10.0,10.0,10.0,10.0,10.0);\n")
 	outfile.write("lset applyto=(all) nst=%s ngammacat=4 rates=%s;\n" %(mrBayesNST, mrBayesRates))
-	outfile.write("set seed=9223 swapseed=9223;")
+	#outfile.write("set seed=9223 swapseed=9223;")
 	outfile.write("prset applyto=(all) statefreqpr=dirichlet(10.0,10.0,10.0,10.0) revmatpr=dirichlet(10.0,20.0,10.0,10.0,20.0,10.0) brlenspr=Unconstrained:GammaDir(1.0,0.100,1.0,1.0) shapepr=exponential(1.0);\n")
 	outfile.write("mcmcp ngen=%s samplefreq=%s printfreq=%s nruns=1 starttree=random nchains=1 savebrlens=yes;\n" %(mrBayesNgen, mrBayesSampleFreq, mrBayesNgen))
 	outfile.write("ss alpha=0.3 nsteps=%s burninss=-2;\n" % mrBayesNsteps)
