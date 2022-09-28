@@ -2,6 +2,7 @@
 import subprocess
 import sys
 import os
+import re
 from Bio import SeqIO
 from Bio import AlignIO
 
@@ -42,6 +43,13 @@ def convertFastaToNexus(inputFile, outputDir, CDS, mrBayesNST = 6, mrBayesRates 
 	locus = ".".join(filename.split(".")[0:-1])
 	AlignIO.convert(inputFile, "fasta", "%s/alignments/nexus/%s.nex" %(outputDir,locus), "nexus", molecule_type = "DNA")
 	AlignIO.convert(inputFile, "fasta", "%s/alignments/nexus/information_content/%s.nex" %(outputDir,locus), "nexus", molecule_type = "DNA")
+	# Some files being converted with apostrophes added around taxon names that break MrBayes. Need to remove them.
+	with open("%s/alignments/nexus/%s.nex" %(outputDir,locus), "r") as infile:
+		lines = infile.readlines()
+	with open("%s/alignments/nexus/%s.nex" %(outputDir,locus), "w") as outfile:
+		for line in lines:
+			outfile.write(re.sub("\'","", line))
+	# End apostrophe replacement block		
 	with open("%s/alignments/nexus/%s.nex" %(outputDir,locus), "r") as infile:
 		linecounter = 1
 		for line in infile:
