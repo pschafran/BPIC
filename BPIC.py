@@ -33,7 +33,7 @@ version = "0.1"
 help = '''
 Required parameters
 -i, --input	Directory containing FASTA files
--f, --format	Input file format (either locus or taxon)
+-f, --format	Input file format (either locus, taxon, or alignment)
 
 Optional parameters (require a value after the flag)
 -a, --aligner	Alignment software (Options: mafft or clustal ; Default: mafft)
@@ -87,16 +87,20 @@ if __name__ == "__main__":
 	if continueRun == False:
 		os.mkdir("%s" %(outputDir))
 		os.mkdir("%s/sequence_files" %(outputDir))
+		os.mkdir("%s/alignments" %(outputDir))
 	#locusList = []
 	# If files already organized by locus, just copy to working directory
 	if continueRun == False:
-		if fileFormat == "locus":
+		if fileFormat == "locus" or fileFormat == "alignment":
 			for file in fileList:
-				filename = file.split("/")[-1]
-				locus = ".".join(filename.split(".")[0:-1])
+				#filename = file.split("/")[-1]
+				#locus = ".".join(filename.split(".")[0:-1])
 				#if locus not in locusList:
 					#locusList.append(locus)
 				shutil.copy(file,"%s/sequence_files/" %(outputDir),follow_symlinks=True)
+				if fileFormat == "alignment":
+					shutil.copy(file,"%s/alignments/" %(outputDir),follow_symlinks=True)
+
 		# If files organized by taxon, reorganize them into locus format
 		elif fileFormat == "taxon":
 			for file in fileList:
@@ -127,37 +131,40 @@ if __name__ == "__main__":
 				incompleteInformationContent.append(locus)
 
 	# Align files
-	alignFileList = [ file for file in glob.glob("%s/sequence_files/*.fasta" % outputDir) ]
-	totalFiles = len(alignFileList)
-	fileCounter = 1
-	if continueRun == False:
-		os.mkdir("%s/alignments" %(outputDir))
-		logOutput(log, logFile, "Aligning files...")
-		if aligner == "mafft":
-			mafftAlign(alignFileList, alignerPath, outputDir, threads, totalFiles, fileCounter)
-		elif aligner == "clustal":
-			clustalAlign(alignFileList, alignerPath, outputDir, threads, totalFiles, fileCounter)
-		logOutput(log, logFile, "Alignments finished.\n---------------------------")
-	elif continueRun == True and continuePoint == "align": # If continuing, compare names of alignment files to sequence file, remove
-		logOutput(log, logFile, "Resuming aligning files...")
-		completeAlignmentFiles = [ file for file in glob.glob("%s/alignments/*.fasta" % outputDir) if os.path.getsize(file) > 0 ]
-		for file in completeAlignmentFiles:
-			if os.path.getsize(file) == 0: # Mafft creates the empty file before finishing the alignment, need to remove to redo
-				os.remove(file)
-				completeAlignmentFiles.remove(file)
-			else:
-				filename = filename = file.split("/")[-1]
-				locus = ".".join(filename.split(".")[0:-1])
-				if "%s/sequence_files/%s.fasta" %(outputDir, locus) in alignFileList:
-					alignFileList.remove("%s/sequence_files/%s.fasta" %(outputDir, locus))
-		fileCounter = len(completeAlignmentFiles)
-		if aligner == "mafft":
-			mafftAlign(alignFileList, alignerPath, outputDir, threads, totalFiles, fileCounter)
-		elif aligner == "clustal":
-			clustalAlign(alignFileList, alignerPath, outputDir, threads, totalFiles, fileCounter)
-		logOutput(log, logFile, "Alignments finished.\n---------------------------")
-	elif continueRun == True and continuePoint == "mrbayes":
-		logOutput(log, logFile, "Reusing previous alignments.\n---------------------------")
+	if fileFormat == "locus" or fileFormat == "taxon":
+		alignFileList = [ file for file in glob.glob("%s/sequence_files/*.fasta" % outputDir) ]
+		totalFiles = len(alignFileList)
+		fileCounter = 1
+		if continueRun == False:
+			#os.mkdir("%s/alignments" %(outputDir))
+			logOutput(log, logFile, "Aligning files...")
+			if aligner == "mafft":
+				mafftAlign(alignFileList, alignerPath, outputDir, threads, totalFiles, fileCounter)
+			elif aligner == "clustal":
+				clustalAlign(alignFileList, alignerPath, outputDir, threads, totalFiles, fileCounter)
+			logOutput(log, logFile, "Alignments finished.\n---------------------------")
+		elif continueRun == True and continuePoint == "align": # If continuing, compare names of alignment files to sequence file, remove
+			logOutput(log, logFile, "Resuming aligning files...")
+			completeAlignmentFiles = [ file for file in glob.glob("%s/alignments/*.fasta" % outputDir) if os.path.getsize(file) > 0 ]
+			for file in completeAlignmentFiles:
+				if os.path.getsize(file) == 0: # Mafft creates the empty file before finishing the alignment, need to remove to redo
+					os.remove(file)
+					completeAlignmentFiles.remove(file)
+				else:
+					filename = filename = file.split("/")[-1]
+					locus = ".".join(filename.split(".")[0:-1])
+					if "%s/sequence_files/%s.fasta" %(outputDir, locus) in alignFileList:
+						alignFileList.remove("%s/sequence_files/%s.fasta" %(outputDir, locus))
+			fileCounter = len(completeAlignmentFiles)
+			if aligner == "mafft":
+				mafftAlign(alignFileList, alignerPath, outputDir, threads, totalFiles, fileCounter)
+			elif aligner == "clustal":
+				clustalAlign(alignFileList, alignerPath, outputDir, threads, totalFiles, fileCounter)
+			logOutput(log, logFile, "Alignments finished.\n---------------------------")
+		elif continueRun == True and continuePoint == "mrbayes":
+			logOutput(log, logFile, "Reusing previous alignments.\n---------------------------")
+	elif fileFormat == "alignment":
+		logOutput(log, logFile, "Input files already aligned.\n---------------------------")
 
 	#Convert alignments to Nexus
 	if continueRun == False or (continueRun == True and continuePoint == "align"):
