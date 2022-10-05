@@ -81,7 +81,7 @@ if __name__ == "__main__":
 	logOutput(log, logFile, "Dependency checking passed.\n---------------------------")
 	fileList = [ file for file in glob.glob("%s/*" % inputDir) if os.path.isfile(file) ]
 	locusList = checkFastas(inputDir,fileFormat, log, logFile)
-	logOutput(log, logFile, "File checking passed.\n---------------------------")
+	#logOutput(log, logFile, "File checking passed.\n---------------------------")
 
 	# Set up files for alignment
 	if continueRun == False:

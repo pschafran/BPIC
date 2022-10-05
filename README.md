@@ -2,7 +2,6 @@
 
 #### Dev Notes:
 * Test files run start to finish. Produces results.html that can be viewed stand-alone
-* Only tested on: 1) macOS Monterey (12.4), zsh shell, Python 3.8.5; 2) Ubuntu 14.04, bash shell, Python 3.7.6
 * Locus-based file arrangement untested
 
 #### To Do
@@ -26,7 +25,7 @@ git clone https://github.com/pschafran/BPIC.git
 ```
 
 #### Dependencies
-* Python >= 3.X
+* Python 3.6
 * BioPython [https://biopython.org/](https://biopython.org/)
 * ETE Toolkit [http://etetoolkit.org/download/](http://etetoolkit.org/download/)
 * MAFFT [https://mafft.cbrc.jp/alignment/software/](https://mafft.cbrc.jp/alignment/software/) and/or Clustal Omega [http://www.clustal.org/omega/](http://www.clustal.org/omega/)
@@ -35,7 +34,8 @@ git clone https://github.com/pschafran/BPIC.git
 
 In my experience, using Conda to install MAFFT and Clustal Omega works, MrBayes works best when installed through Homebrew. Installing in a new environment is recommended to avoid conflicts if other conda packages are already installed:
 ```
-conda create -n BPIC -c bioconda -c conda-forge -c etetoolkit mafft clustalo ete3 ete_toolchain python=3
+conda create -n BPIC -c bioconda -c conda-forge -c etetoolkit mafft clustalo ete3 ete_toolchain python=3.6
+pip install biopython
 ```
 
 The base `BPIC` directory contains an empty directory where you can link dependencies if they are not read directly from the `PATH` variable. In particular, software installed with Conda may not be autodetected by `BPIC`. If you are able to call the program directly in a Terminal, you can do:
