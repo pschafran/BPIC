@@ -2,6 +2,7 @@
 import subprocess
 import sys
 import os
+import re
 from Bio import SeqIO
 from Bio import AlignIO
 
@@ -42,6 +43,13 @@ def convertFastaToNexus(inputFile, outputDir, CDS, mrBayesNST = 6, mrBayesRates 
 	locus = ".".join(filename.split(".")[0:-1])
 	AlignIO.convert(inputFile, "fasta", "%s/alignments/nexus/%s.nex" %(outputDir,locus), "nexus", molecule_type = "DNA")
 	AlignIO.convert(inputFile, "fasta", "%s/alignments/nexus/information_content/%s.nex" %(outputDir,locus), "nexus", molecule_type = "DNA")
+	# Some files being converted with apostrophes added around taxon names that break MrBayes. Need to remove them.
+	with open("%s/alignments/nexus/%s.nex" %(outputDir,locus), "r") as infile:
+		lines = infile.readlines()
+	with open("%s/alignments/nexus/%s.nex" %(outputDir,locus), "w") as outfile:
+		for line in lines:
+			outfile.write(re.sub("\'","", line))
+	# End apostrophe replacement block
 	with open("%s/alignments/nexus/%s.nex" %(outputDir,locus), "r") as infile:
 		linecounter = 1
 		for line in infile:
@@ -163,9 +171,9 @@ def concatenateAlignments(aln1, aln2, outputDir, CDS, mrBayesNST = 6, mrBayesRat
 	#outfile.write("prset applyto=(all) statefreqpr=dirichlet(10.0,10.0,10.0,10.0) revmatpr=dirichlet(10.0,20.0,10.0,10.0,20.0,10.0) brlenspr=Unconstrained:GammaDir(1.0,0.100,1.0,1.0) shapepr=exponential(1.0);\n")
 	#outfile.write("mcmcp ngen=%s relburnin=yes burninfrac=%s samplefreq=%s printfreq=%s nruns=1 starttree=random nchains=1 savebrlens=yes;\n" %(mrBayesNgen, mrBayesBurninFrac, mrBayesSampleFreq, mrBayesNgen))
 	if CDS == False:
-		outfile.write("charset %s = 1-%d;\n" %(locus1, masterDict[aln1]['nchar']))
-		outfile.write("charset %s = %d-%d;\n" %(locus2, masterDict[aln1]['nchar']+1, totalChar))
-		outfile.write("partition combined = 2: %s,%s;\n" %(locus1, locus2))
+		outfile.write("charset first = 1-%d;\n" %(masterDict[aln1]['nchar']))
+		outfile.write("charset second = %d-%d;\n" %(masterDict[aln1]['nchar']+1, totalChar))
+		outfile.write("partition combined = 2: first, second;\n")
 		outfile.write("set partition = combined;\n")
 		outfile.write("prset ratepr=dirichlet(10.0,10.0);\n")
 	elif CDS == True:
@@ -209,9 +217,9 @@ def concatenateAlignments(aln1, aln2, outputDir, CDS, mrBayesNST = 6, mrBayesRat
 	#outfile.write("prset applyto=(all) statefreqpr=dirichlet(10.0,10.0,10.0,10.0) revmatpr=dirichlet(10.0,20.0,10.0,10.0,20.0,10.0) brlenspr=Unconstrained:GammaDir(1.0,0.100,1.0,1.0) shapepr=exponential(1.0);\n")
 	#outfile.write("mcmcp ngen=%s relburnin=yes burninfrac=%s samplefreq=%s printfreq=%s nruns=1 starttree=random nchains=1 savebrlens=yes;\n" %(mrBayesNgen, mrBayesBurninFrac, mrBayesSampleFreq, mrBayesNgen))
 	if CDS == False:
-		outfile.write("charset %s = 1-%d;\n" %(locus1, masterDict[aln1]['nchar']))
-		outfile.write("charset %s = %d-%d;\n" %(locus2, masterDict[aln1]['nchar']+1, totalChar))
-		outfile.write("partition combined = 2: %s,%s;\n" %(locus1, locus2))
+		outfile.write("charset first = 1-%d;\n" %(masterDict[aln1]['nchar']))
+		outfile.write("charset second = %d-%d;\n" %(masterDict[aln1]['nchar']+1, totalChar))
+		outfile.write("partition combined = 2: first, second;\n")
 		outfile.write("set partition = combined;\n")
 		outfile.write("unlink shape=(all) statefreq=(all) revmat=(all) brlen=(all);\n")
 		outfile.write("prset ratepr=dirichlet(10.0,10.0);\n")

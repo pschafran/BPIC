@@ -16,7 +16,7 @@ https://github.com/pschafran/BPIC
 	help = '''
 Required parameters
 -i, --input	Directory containing FASTA files
--f, --format	Input file format (either locus or taxon)
+-f, --format	Input file format (either locus, taxon, or alignment)
 
 Optional parameters (require a value after the flag)
 -a, --aligner	Alignment software (Options: mafft or clustal ; Default: mafft)
@@ -113,8 +113,8 @@ Advanced
 				exit(1)
 		if parameter in ["-f","-format"]:
 			fileFormat = commandline[i+1]
-			if fileFormat not in ["locus","taxon"]:
-				print("ERROR: File format must be 'locus' or 'taxon'.")
+			if fileFormat not in ["locus","taxon","alignment"]:
+				print("ERROR: File format must be 'locus', 'taxon', or 'alignment'.")
 				exit(1)
 		if parameter in ["-a","--aligner"]:
 			aligner = commandline[i+1]
@@ -272,7 +272,7 @@ def checkFastas(inputDir, fileFormat, log = False, logFile = "null"):
 		else:
 			locusList = sequenceDict[taxon]
 			logOutput(log, logFile, "Input file checking passed.\n------------------------")
-	elif fileFormat == "locus":
+	elif fileFormat == "locus" or fileFormat == "alignment":
 		#Parse all files for sequence names, check for duplicates in each file
 		for file in fileList:
 			taxonList = []
