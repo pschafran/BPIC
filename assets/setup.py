@@ -234,7 +234,8 @@ def checkFastas(inputDir, fileFormat, log = False, logFile = "null"):
 		#Parse all files for sequence names, check for duplicates in each file
 		for file in fileList:
 			locusList = []
-			taxon = ".".join(file.split(".")[0:-1])
+			filename = file.split("/")[-1]
+			taxon = ".".join(filename.split(".")[0:-1])
 			iterator = SeqIO.parse("%s/%s" %(inputDir,file), "fasta")
 			seqIDs = sorted([record.id for record in iterator])
 			for locus in seqIDs:
@@ -276,7 +277,8 @@ def checkFastas(inputDir, fileFormat, log = False, logFile = "null"):
 		#Parse all files for sequence names, check for duplicates in each file
 		for file in fileList:
 			taxonList = []
-			locus = ".".join(file.split(".")[0:-1])
+			filename = file.split("/")[-1]
+			locus = ".".join(filename.split(".")[0:-1])
 			iterator = SeqIO.parse("%s/%s" %(inputDir,file), "fasta")
 			seqIDs = sorted([record.id for record in iterator])
 			sequenceDict.update({locus : seqIDs})
