@@ -236,7 +236,7 @@ def checkFastas(inputDir, fileFormat, log = False, logFile = "null"):
 			locusList = []
 			filename = file.split("/")[-1]
 			taxon = ".".join(filename.split(".")[0:-1])
-			iterator = SeqIO.parse("%s/%s" %(inputDir,file), "fasta")
+			iterator = SeqIO.parse("%s" %(file), "fasta")
 			seqIDs = sorted([record.id for record in iterator])
 			for locus in seqIDs:
 				if locus in locusList:
@@ -279,7 +279,7 @@ def checkFastas(inputDir, fileFormat, log = False, logFile = "null"):
 			taxonList = []
 			filename = file.split("/")[-1]
 			locus = ".".join(filename.split(".")[0:-1])
-			iterator = SeqIO.parse("%s/%s" %(inputDir,file), "fasta")
+			iterator = SeqIO.parse("%s" %(file), "fasta")
 			seqIDs = sorted([record.id for record in iterator])
 			sequenceDict.update({locus : seqIDs})
 			for taxon in seqIDs:
