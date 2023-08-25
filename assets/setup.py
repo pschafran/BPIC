@@ -48,9 +48,10 @@ Advanced
 --mafft-path	Path to MAFFT executable
 --clustal-path	Path to Clustal executable
 --galax-path	Path to Galax executable
+--timeout	Initial length (minutes) to run MrBayes before killing job; increased during run as needed (default: 60)
 '''
 
-	acceptedParameters = ["-i","--input","-f","--format","-a","--aligner","-t","--threads","-o","--output","--force","--CDS","--continue","-h","--help","-v","--version","-c","--cite","--mrbayes-path","--mafft-path","--clustal-path","--galax-path", "--mrbayes-nst", "--mrbayes-rates", "--mrbayes-ngen", "--mrbayes-burninfrac", "--mrbayes-samplefreq", "--mrbayes-nsteps"]
+	acceptedParameters = ["-i","--input","-f","--format","-a","--aligner","-t","--threads","-o","--output","--force","--CDS","--continue","-h","--help","-v","--version","-c","--cite","--mrbayes-path","--mafft-path","--clustal-path","--galax-path", "--mrbayes-nst", "--mrbayes-rates", "--mrbayes-ngen", "--mrbayes-burninfrac", "--mrbayes-samplefreq", "--mrbayes-nsteps","--timeout"]
 
 	# Set default parameters
 	aligner = "mafft"
@@ -73,6 +74,7 @@ Advanced
 	mrBayesSampleFreq = 1000
 	mrBayesPrintFreq = 10000000
 	mrBayesNsteps = 30
+	timeout=60
 
 
 	if "-h" in commandline or "--help" in commandline:
@@ -153,6 +155,8 @@ Advanced
 			mrBayesSampleFreq = commandline[i+1]
 		if parameter == "--mrbayes-nsteps":
 			mrBayesNsteps = commandline[i+1]
+		if parameter == "--timeout":
+			timeout = float(commandline[i+1])
 		if parameter == "--continue":
 			continuePoint = commandline[i+1]
 			if continuePoint not in ["align","mrbayes"]:
@@ -177,7 +181,7 @@ Advanced
 		if log == True:
 			logFile = "%s/%s" %(outputDir,logFile)
 		i += 1
-	parameterDict = {"inputDir" : inputDir, "fileFormat" : fileFormat, "aligner" : aligner, "forceOverwrite" : forceOverwrite, "CDS" : CDS, "continueRun" : continueRun, "continuePoint" : continuePoint, "log" : log, "logFile" : logFile, "outputDir" : outputDir, "threads" : threads, "mrBayesPath" : mrBayesPath, "mafftPath" : mafftPath, "clustalPath" : clustalPath, "galaxPath" : galaxPath, "mrBayesNST" : mrBayesNST, "mrBayesRates" : mrBayesRates, "mrBayesNgen" : mrBayesNgen, "mrBayesBurninFrac" : mrBayesBurninFrac, "mrBayesSampleFreq" : mrBayesSampleFreq, "mrBayesNsteps" : mrBayesNsteps }
+	parameterDict = {"inputDir" : inputDir, "fileFormat" : fileFormat, "aligner" : aligner, "forceOverwrite" : forceOverwrite, "CDS" : CDS, "continueRun" : continueRun, "continuePoint" : continuePoint, "log" : log, "logFile" : logFile, "outputDir" : outputDir, "threads" : threads, "mrBayesPath" : mrBayesPath, "mafftPath" : mafftPath, "clustalPath" : clustalPath, "galaxPath" : galaxPath, "mrBayesNST" : mrBayesNST, "mrBayesRates" : mrBayesRates, "mrBayesNgen" : mrBayesNgen, "mrBayesBurninFrac" : mrBayesBurninFrac, "mrBayesSampleFreq" : mrBayesSampleFreq, "mrBayesNsteps" : mrBayesNsteps, "timeout" : timeout }
 	return parameterDict
 
 def checkDependencies(aligner, mrBayes, mafft, clustal, galax, dependencyDir, log = False, logFile = "null"):
