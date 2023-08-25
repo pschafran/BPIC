@@ -2,13 +2,20 @@
 import subprocess
 from ete3 import Tree
 import re
+import time
+import signal
 
-def mrBayes(cmd):
+def mrBayes(cmd, timeout=5):
 	file = cmd.split(" ")[-1]
 	logFile = open("%s.log" % file, "w")
-	process = subprocess.run(cmd, stdout=logFile, stderr=subprocess.PIPE, shell=True)
+	try:
+		process = subprocess.run(cmd, stdout=logFile, stderr=subprocess.PIPE, timeout = timeout*60, shell=True)
+		failed = False
 	#(out, err) = process.communicate() #the stdout and stderr
+	except subprocess.TimeoutExpired:
+		failed = True
 	logFile.close()
+	return cmd, failed
 
 def extractMargLik(mbLogFile):
 	linecounter = 1
