@@ -20,6 +20,8 @@ from assets.tree import extractIpct
 from assets.tree import rfDistance
 from assets.html import writeHTML
 import multiprocessing
+import threading
+import signal
 from Bio import SeqIO
 from collections import Counter
 
@@ -63,7 +65,10 @@ Advanced
 --mafft-path	Path to MAFFT executable
 --clustal-path	Path to Clustal executable
 --galax-path	Path to Galax executable
+--timeout	Initial length (minutes) to run MrBayes before killing job; increased during run as needed (default: 60)
 '''
+
+
 
 
 ### MAIN ###
@@ -203,14 +208,38 @@ if __name__ == "__main__":
 		logOutput(log, logFile, "Generating marginal likelihood trees...")
 		for file in sorted(fileList):
 			mbCmdList.append("%s %s" %(mrBayesPath, file))
+		mbCmdList = [(mbCmd, timeout) for mbCmd in mbCmdList]
 		with multiprocessing.Pool(threads) as pool:
-			for count,value in enumerate(pool.imap(mrBayes,mbCmdList)):
+			completedMrBayes = []
+			failedMrBayes = []
+			for cmd,failed in pool.starmap(mrBayes, mbCmdList):
+				if failed == False:
+					completedMrBayes.append(cmd)
+				elif failed == True:
+					failedMrBayes.append(cmd)
+			#for count,value in enumerate(pool.imap(mrBayes,mbCmdList)):
 				#Progress bar
-				completionPerc = int(float(100*count)/float(len(mbCmdList)))
+				completionPerc = int(float(100*len(completedMrBayes))/float(len(mbCmdList)))
 				sys.stdout.write('\r')
 				sys.stdout.write("[%-100s] %d%%" % ('='*completionPerc, completionPerc))
 				sys.stdout.flush()
 			sys.stdout.write('\n')
+		#print(failedMrBayes)
+		while len(failedMrBayes) > 0:
+			timeout = timeout*2
+			mbCmdList = [(mbCmd, timeout) for mbCmd in failedMrBayes]
+			logOutput(log, logFile, "Retrying failed MrBayes runs with timeout of %s minutes..." %(timeout))
+			with multiprocessing.Pool(threads) as pool:
+				for cmd,failed in pool.starmap(mrBayes, mbCmdList):
+					if failed == False:
+						completedMrBayes.append(cmd)
+						failedMrBayes.remove(cmd)
+					completionPerc = int(float(100*len(completedMrBayes))/(float(len(mbCmdList))+float(len(completedMrBayes))))
+					sys.stdout.write('\r')
+					sys.stdout.write("[%-100s] %d%%" % ('='*completionPerc, completionPerc))
+					sys.stdout.flush()
+				sys.stdout.write('\n')
+
 	# If continuing, check if MrBayes run completed (ran sump), if not delete all partial files except the nexus alignment
 	elif continueRun == True and continuePoint == "mrbayes":
 		logOutput(log, logFile, "Resuming making marginal likelihood trees...")
@@ -226,10 +255,11 @@ if __name__ == "__main__":
 						os.remove(deleteFile)
 		for file in sorted(fileList):
 			mbCmdList.append("%s %s" %(mrBayesPath, file))
+		mbCmdList = [(mbCmd, timeout) for mbCmd in mbCmdList]
 		filecounter = totalFiles - len(mbCmdList)
 		logOutput(log, logFile, "Resuming making marginal likelihood trees...")
 		with multiprocessing.Pool(threads) as pool:
-			for count,value in enumerate(pool.imap(mrBayes,mbCmdList)):
+			for count,value in enumerate(pool.starmap(mrBayes,mbCmdList)):
 				#Progress bar
 				completionPerc = int(float(100*(filecounter+count))/float(totalFiles))
 				sys.stdout.write('\r')
