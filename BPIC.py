@@ -20,8 +20,6 @@ from assets.tree import extractIpct
 from assets.tree import rfDistance
 from assets.html import writeHTML
 import multiprocessing
-import threading
-import signal
 from Bio import SeqIO
 from collections import Counter
 
@@ -227,6 +225,12 @@ if __name__ == "__main__":
 		#print(failedMrBayes)
 		while len(failedMrBayes) > 0:
 			timeout = timeout*2
+			for line in failedMrBayes:
+				file = line.strip("\n").split(" ")[1]
+				for deleteFile in glob.glob("%s.*" %file):
+					if deleteFile.split(".")[-1] != "nex":
+						#logOutput(log, logFile, "Deleting partial file: %s" % deleteFile)
+						os.remove(deleteFile)
 			mbCmdList = [(mbCmd, timeout) for mbCmd in failedMrBayes]
 			logOutput(log, logFile, "Retrying failed MrBayes runs with timeout of %s minutes..." %(timeout))
 			with multiprocessing.Pool(threads) as pool:
