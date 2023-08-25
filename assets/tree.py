@@ -7,9 +7,10 @@ import signal
 
 def mrBayes(cmd, timeout=5):
 	file = cmd.split(" ")[-1]
+	cmdList = cmd.split(" ")
 	logFile = open("%s.log" % file, "w")
 	try:
-		process = subprocess.run(cmd, stdout=logFile, stderr=subprocess.PIPE, timeout = timeout*60, shell=True)
+		process = subprocess.run(cmdList, stdout=logFile, stderr=subprocess.PIPE, timeout = timeout*60, shell=False)
 		failed = False
 	#(out, err) = process.communicate() #the stdout and stderr
 	except subprocess.TimeoutExpired:
