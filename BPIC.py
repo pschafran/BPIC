@@ -249,7 +249,7 @@ if __name__ == "__main__":
 		logOutput(log, logFile, "Resuming making marginal likelihood trees...")
 		fileCounter = 1
 		for file in sorted(fileList):
-			if os.path.isfile("%s.pstat" % file):
+			if os.path.isfile("%s.ss.pstat" % file):
 				fileList.remove(file)
 				fileCounter += 1
 			else:
