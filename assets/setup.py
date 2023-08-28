@@ -74,7 +74,7 @@ Advanced
 	mrBayesSampleFreq = 1000
 	mrBayesPrintFreq = 10000000
 	mrBayesNsteps = 30
-	timeout=60
+	timeout=30
 
 
 	if "-h" in commandline or "--help" in commandline:
