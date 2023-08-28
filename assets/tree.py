@@ -5,7 +5,7 @@ import re
 import time
 import signal
 
-def mrBayes(cmd, timeout=5):
+def mrBayes(cmd, timeout=30):
 	file = cmd.split(" ")[-1]
 	cmdList = cmd.split(" ")
 	logFile = open("%s.log" % file, "w")
