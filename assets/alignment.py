@@ -84,7 +84,7 @@ def convertFastaToNexus(inputFile, outputDir, CDS, mrBayesNST = 6, mrBayesRates 
 		outfile.write("mcmc ngen=10000000 samplefreq=100 printfreq=10000 nchains=1 nruns=1;\n")
 		#outfile.write("mcmcp ngen=%s samplefreq=%s printfreq=%s nruns=1 starttree=random nchains=1 savebrlens=yes;\n" %(mrBayesNgen, mrBayesSampleFreq, mrBayesNgen))
 		outfile.write("sumt conformat=simple;\n")
-		outfile.write("mcmcp filename=%s/alignments/nexus/%s.ss;\n" %(outputDir, locus))
+		outfile.write("mcmcp filename=%s/alignments/nexus/%s.nex.ss;\n" %(outputDir, locus))
 		#outfile.write("ss alpha=0.3 nsteps=%s burninss=-2;\n" % mrBayesNsteps)
 		outfile.write("ss alpha=0.3 nsteps=30 burninss=-2;\n")
 		outfile.write("sump;\n")
