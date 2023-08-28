@@ -8,7 +8,7 @@ from Bio import SeqIO
 def checkArgs(commandline):
 	cite = '''
 By: Peter W. Schafran
-Last Updated: 2022 September 12
+Last Updated: 2023 August 28
 https://github.com/pschafran/BPIC
 	'''
 	version = "0.1"
@@ -187,9 +187,9 @@ Advanced
 def checkDependencies(aligner, mrBayes, mafft, clustal, galax, dependencyDir, log = False, logFile = "null"):
 	mrBayesPath = shutil.which(mrBayes)
 	if mrBayesPath == None:
-		mrBayesPath = shutil.which("mb")
-	if mrBayesPath == None:
 		mrBayesPath = shutil.which("%s/mb" % dependencyDir)
+	if mrBayesPath == None:
+		mrBayesPath = shutil.which("mb")
 	if mrBayesPath == None:
 		logOutput(log, logFile, "ERROR: MrBayes could not be found.")
 		exit(1)
@@ -197,9 +197,9 @@ def checkDependencies(aligner, mrBayes, mafft, clustal, galax, dependencyDir, lo
 
 	galaxPath = shutil.which(galax)
 	if galaxPath == None:
-		galaxPath = shutil.which("galax")
-	if galaxPath == None:
 		galaxPath = shutil.which("%s/galax" % dependencyDir)
+	if galaxPath == None:
+		galaxPath = shutil.which("galax")
 	if galaxPath == None:
 		logOutput(log, logFile, "ERROR: Galax could not be executed.")
 		exit(1)
@@ -207,9 +207,9 @@ def checkDependencies(aligner, mrBayes, mafft, clustal, galax, dependencyDir, lo
 	if aligner == "mafft":
 		mafftPath = shutil.which(mafft)
 		if mafftPath == None:
-			mafftPath = shutil.which("mafft")
-		if mafftPath == None:
 			mafftPath = shutil.which("%s/mafft" % dependencyDir)
+		if mafftPath == None:
+			mafftPath = shutil.which("mafft")
 		if mafftPath == None:
 			logOutput(log, logFile, "ERROR: MAFFT could not be executed.")
 			exit(1)
@@ -218,9 +218,9 @@ def checkDependencies(aligner, mrBayes, mafft, clustal, galax, dependencyDir, lo
 	elif aligner == "clustal":
 		clustalPath = shutil.which(clustal)
 		if clustalPath == None:
-			clustalPath = shutil.which("clustalo")
-		if clustalPath == None:
 			clustalPath = shutil.which("%s/clustalo" % dependencyDir)
+		if clustalPath == None:
+			clustalPath = shutil.which("clustalo")
 		if clustalPath == None:
 			logOutput(log, logFine, "ERROR: Clustal Omega could not be executed.")
 			exit(1)
