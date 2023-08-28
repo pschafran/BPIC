@@ -287,7 +287,7 @@ def concatenateAlignments(aln1, aln2, outputDir, CDS, mrBayesNST = 6, mrBayesRat
 
 def reseedBayes(file):
 	newSeed = random.randint(1,9999)
-	with open(file,"r") as infile, with open("%s.reseed.nex" %file,"w") as outfile:
+	with open(file,"r") as infile, open("%s.reseed.nex" %file,"w") as outfile:
 		for line in infile:
 			if line.startswith("set seed="):
 				outfile.write("set seed=%s swapseed=%s;\n" %(newSeed, newSeed))
