@@ -14,6 +14,7 @@ from assets.alignment import mafftAlign
 from assets.alignment import clustalAlign
 from assets.alignment import convertFastaToNexus
 from assets.alignment import concatenateAlignments
+from assets.alignment import reseedBayes
 from assets.tree import mrBayes
 from assets.tree import extractMargLik
 from assets.tree import extractIpct
@@ -227,6 +228,7 @@ if __name__ == "__main__":
 			timeout = timeout*2
 			for line in failedMrBayes:
 				file = line.strip("\n").split(" ")[1]
+				reseedBayes(file)
 				for deleteFile in glob.glob("%s.*" %file):
 					if deleteFile.split(".")[-1] != "nex":
 						#logOutput(log, logFile, "Deleting partial file: %s" % deleteFile)
@@ -253,6 +255,7 @@ if __name__ == "__main__":
 				fileList.remove(file)
 				fileCounter += 1
 			else:
+				reseedBayes(file)
 				for deleteFile in glob.glob("%s.*" %file):
 					if deleteFile.split(".")[-1] != "nex":
 						logOutput(log, logFile, "Deleting partial file: %s" % deleteFile)
@@ -290,7 +293,7 @@ if __name__ == "__main__":
 			sys.stdout.write('\n')
 	elif continueRun == True and continuePoint == "mrbayes":
 		for file in sorted(fileList):
-			if os.path.isfile("%s.pstat" % file):
+			if os.path.isfile("%s.ss.pstat" % file):
 				fileList.remove(file)
 		for file in sorted(fileList):
 			mbCmdList.append("%s %s" %(mrBayesPath, file))

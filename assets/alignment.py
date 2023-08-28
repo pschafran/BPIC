@@ -3,6 +3,7 @@ import subprocess
 import sys
 import os
 import re
+import random
 from Bio import SeqIO
 from Bio import AlignIO
 
@@ -282,3 +283,14 @@ def concatenateAlignments(aln1, aln2, outputDir, CDS, mrBayesNST = 6, mrBayesRat
 	outfile.write("log stop;\n")
 	outfile.write("end;\n")
 	outfile.close()
+
+
+def reseedBayes(file):
+	newSeed = random.randint(1,9999)
+	with open(file,"r") as infile, with open("%s.reseed.nex" %file,"w") as outfile:
+		for line in infile:
+			if line.startswith("set seed="):
+				outfile.write("set seed=%s swapseed=%s;\n" %(newSeed, newSeed))
+			else:
+				outfile.write(line)
+	subprocess.run(["mv", "%s.reseed.nex" % file, file])
