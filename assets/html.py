@@ -591,7 +591,7 @@ def writeHTML(file, margLikelihoodDict, ipctDict, locusLengthDict):
                 this.plot_width = this.width;
                 this.plot_height = this.height - color_bar_height;
 
-                this.outer_radius = this.plot_width/2 - 50;
+                this.outer_radius = this.plot_width/2.5 - 50;
                 this.inner_radius = this.outer_radius - 50;
                 this.label_radius = this.outer_radius + 10;
                 this.tension = 1.0;
@@ -642,11 +642,15 @@ def writeHTML(file, margLikelihoodDict, ipctDict, locusLengthDict):
                 var common_topo_better_than_common_tree = function(d, tol) {
                     return d.symtree - d.symtopo > tol;
                     }
+                var separate_better_than_any_common = function(d,tol) {
+                    return (d.apotree1 + d.apotree2) > d.symtopo && (d.apotree1 + d.apotree2) > d.symtree;
+                    }
 
                 var show_connection = function(d) {
                     var tol = 1.0;
 
-                    return separate_better_than_common_topo(d, tol);
+                    return separate_better_than_any_common(d, tol);
+                    //return separate_better_than_common_topo(d, tol);
                     //return common_topo_better_than_separate(d, tol);
 
                     //return separate_better_than_common_tree(d, tol);
@@ -666,7 +670,7 @@ def writeHTML(file, margLikelihoodDict, ipctDict, locusLengthDict):
                 var nchunks = d3.max(genes, function(d) {return d.chunk;});
 
                 // total_angle is fraction of circle devoted to chunks, excluding gaps between chunks
-                var total_angle = 2.147*Math.PI - eps*nchunks;
+                var total_angle = 2*Math.PI - eps*nchunks;
 
                 // store information for arcs representing genes in arcinfo
 
@@ -1021,7 +1025,7 @@ def writeHTML(file, margLikelihoodDict, ipctDict, locusLengthDict):
                 }
 
             var container_div = d3.select("body");
-            var gene_circle = new GeneCirclePanel(container_div, "genecircle", 0, 0, 800, 800 + color_bar_height);
+            var gene_circle = new GeneCirclePanel(container_div, "genecircle", 0, 0, 750, 750 + color_bar_height);
             gene_circle.setup();
 
 		</script>
