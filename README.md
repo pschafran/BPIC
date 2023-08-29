@@ -17,7 +17,7 @@ Script for batch processing of homologous loci for up to ~12 taxa to calculate B
 4. Analyze information content (via Galax)
 
 
-#### Example output (click to view interactive version)
+#### Example output (open linked raw file to see interactive version)
 
 <a href ="assets/results.html"><img src="assets/results.png"></a>
 
