@@ -26,7 +26,7 @@ from collections import Counter
 
 cite = '''
 By: Peter W. Schafran
-Last Updated: 2022 September 12
+Last Updated: 2023 August 29
 https://github.com/pschafran/BPIC
 '''
 version = "0.1"
@@ -47,7 +47,7 @@ Optional flags (do not require a value after the flag)
 --CDS	Partition MrBayes analysis by coding site
 --force Overwrite existing results
 
-MrBayes Parameters -v alues must be recognized by MrBayes (see https://nbisweden.github.io/MrBayes/manual.html)
+MrBayes Parameters - values must be recognized by MrBayes (see https://nbisweden.github.io/MrBayes/manual.html)
 --mrbayes-nst	Substitution model (default: 6)
 --mrbayes-rates	Model for among-site rate variation (default: gamma)
 --mrbayes-ngen	Number of cycles for MCMC (default: 10000000)
@@ -202,79 +202,85 @@ if __name__ == "__main__":
 	fileList = [ file for file in glob.glob("%s/alignments/nexus/*.nex" % outputDir) if os.path.isfile(file) ]
 	totalFiles = len(fileList)
 	#fileCounter = 1
-	mbCmdList = []
 	if continueRun == False or (continueRun == True and continuePoint == "align"):
-		logOutput(log, logFile, "Generating marginal likelihood trees...")
-		for file in sorted(fileList):
-			mbCmdList.append("%s %s" %(mrBayesPath, file))
-		mbCmdList = [(mbCmd, timeout) for mbCmd in mbCmdList]
-		with multiprocessing.Pool(threads) as pool:
-			completedMrBayes = []
-			failedMrBayes = []
-			for cmd,failed in pool.starmap(mrBayes, mbCmdList):
-				if failed == False:
-					completedMrBayes.append(cmd)
-				elif failed == True:
-					failedMrBayes.append(cmd)
-			#for count,value in enumerate(pool.imap(mrBayes,mbCmdList)):
-				#Progress bar
-				completionPerc = int(float(100*len(completedMrBayes))/float(len(mbCmdList)))
-				sys.stdout.write('\r')
-				sys.stdout.write("[%-100s] %d%%" % ('='*completionPerc, completionPerc))
-				sys.stdout.flush()
-			sys.stdout.write('\n')
-		#print(failedMrBayes)
-		while len(failedMrBayes) > 0:
-			timeout = timeout*2
-			for line in failedMrBayes:
-				file = line.strip("\n").split(" ")[1]
-				reseedBayes(file)
-				for deleteFile in glob.glob("%s.*" %file):
-					if deleteFile.split(".")[-1] != "nex":
-						#logOutput(log, logFile, "Deleting partial file: %s" % deleteFile)
-						os.remove(deleteFile)
-			mbCmdList = [(mbCmd, timeout) for mbCmd in failedMrBayes]
-			logOutput(log, logFile, "Retrying failed MrBayes runs with timeout of %s minutes..." %(timeout))
+		while len(fileList) > 0:
+			mbCmdList = []
+			logOutput(log, logFile, "Running %s stepping stone analyses with timeout of %s minutes..." % (len(fileList),timeout))
+			for file in sorted(fileList):
+				mbCmdList.append("%s %s" %(mrBayesPath, file))
+			mbCmdList = [(mbCmd, timeout) for mbCmd in mbCmdList]
 			with multiprocessing.Pool(threads) as pool:
-				for cmd,failed in pool.starmap(mrBayes, mbCmdList):
+				failedMrBayes = []
+				for file,failed in pool.starmap(mrBayes, mbCmdList):
 					if failed == False:
-						completedMrBayes.append(cmd)
-						failedMrBayes.remove(cmd)
-					completionPerc = int(float(100*len(completedMrBayes))/(float(len(mbCmdList))+float(len(completedMrBayes))))
+						fileList.remove(file)
+					elif failed == True:
+						failedMrBayes.append(file)
+						reseedBayes(file)
+				#for count,value in enumerate(pool.imap(mrBayes,mbCmdList)):
+					#Progress bar
+					completionPerc = int(float(100*(totalFiles-len(fileList)))/float(totalFiles))
 					sys.stdout.write('\r')
 					sys.stdout.write("[%-100s] %d%%" % ('='*completionPerc, completionPerc))
 					sys.stdout.flush()
 				sys.stdout.write('\n')
+			timeout = timeout*2
+		#print(failedMrBayes)
+		#while len(failedMrBayes) > 0:
+		#	timeout = timeout*2
+		#	for line in failedMrBayes:
+		#		file = line.strip("\n").split(" ")[1]
+		#		reseedBayes(file)
+		#		for deleteFile in glob.glob("%s.*" %file):
+		#			if deleteFile.split(".")[-1] != "nex":
+		#				#logOutput(log, logFile, "Deleting partial file: %s" % deleteFile)
+		#				os.remove(deleteFile)
+		#	mbCmdList = [(mbCmd, timeout) for mbCmd in failedMrBayes]
+		#	logOutput(log, logFile, "Retrying failed MrBayes runs with timeout of %s minutes..." %(timeout))
+		#	with multiprocessing.Pool(threads) as pool:
+		#		for cmd,failed in pool.starmap(mrBayes, mbCmdList):
+		#			if failed == False:
+		#				completedMrBayes.append(cmd)
+		#				failedMrBayes.remove(cmd)
+		#			completionPerc = int(float(100*len(completedMrBayes))/(float(len(mbCmdList))+float(len(completedMrBayes))))
+		##			sys.stdout.write('\r')
+		##			sys.stdout.write("[%-100s] %d%%" % ('='*completionPerc, completionPerc))
+		#			sys.stdout.flush()
+		#		sys.stdout.write('\n')
 
 	# If continuing, check if MrBayes run completed (ran sump), if not delete all partial files except the nexus alignment
 	elif continueRun == True and continuePoint == "mrbayes":
-		logOutput(log, logFile, "Resuming making marginal likelihood trees...")
-		fileCounter = 1
+		logOutput(log, logFile, "Resuming stepping stone analyses...")
 		for file in sorted(fileList):
-			if os.path.isfile("%s.ss.pstat" % file):
+			if os.path.isfile("%s.pstat" % file):
 				fileList.remove(file)
-				fileCounter += 1
 			else:
 				reseedBayes(file)
 				for deleteFile in glob.glob("%s.*" %file):
 					if deleteFile.split(".")[-1] != "nex":
 						logOutput(log, logFile, "Deleting partial file: %s" % deleteFile)
 						os.remove(deleteFile)
-		for file in sorted(fileList):
-			mbCmdList.append("%s %s" %(mrBayesPath, file))
-		mbCmdList = [(mbCmd, timeout) for mbCmd in mbCmdList]
-		filecounter = totalFiles - len(mbCmdList)
-		logOutput(log, logFile, "Resuming making marginal likelihood trees...")
-		with multiprocessing.Pool(threads) as pool:
-			for count,value in enumerate(pool.starmap(mrBayes,mbCmdList)):
-				#Progress bar
-				completionPerc = int(float(100*(filecounter+count))/float(totalFiles))
-				sys.stdout.write('\r')
-				sys.stdout.write("[%-100s] %d%%" % ('='*completionPerc, completionPerc))
-				sys.stdout.flush()
-			sys.stdout.write('\n')
-
-	logOutput(log, logFile, "Marginal likelihood trees finished.")
+		while len(fileList) > 0:
+			mbCmdList = []
+			for file in sorted(fileList):
+				mbCmdList.append("%s %s" %(mrBayesPath, file))
+			mbCmdList = [(mbCmd, timeout) for mbCmd in mbCmdList]
+			with multiprocessing.Pool(threads) as pool:
+				failedMrBayes = []
+				for file,failed in pool.starmap(mrBayes,mbCmdList):
+					if failed == False:
+						fileList.remove(file)
+					elif failed == True:
+						failedMrBayes.append(file)
+						reseedBayes(file)
+					#Progress bar
+					completionPerc = int(float(100*(totalFiles-len(fileList)))/float(totalFiles))
+					sys.stdout.write('\r')
+					sys.stdout.write("[%-100s] %d%%" % ('='*completionPerc, completionPerc))
+					sys.stdout.flush()
+				sys.stdout.write('\n')
+			timeout=timeout*2
+	logOutput(log, logFile, "Stepping stone analyses finished.")
 	logOutput(log, logFile, "Generating information content trees...")
 	fileList = [ file for file in glob.glob("%s/alignments/nexus/information_content/*" % outputDir) if os.path.isfile(file) ]
 	totalFiles = len(fileList)
@@ -293,7 +299,7 @@ if __name__ == "__main__":
 			sys.stdout.write('\n')
 	elif continueRun == True and continuePoint == "mrbayes":
 		for file in sorted(fileList):
-			if os.path.isfile("%s.ss.pstat" % file):
+			if os.path.isfile("%s.pstat" % file):
 				fileList.remove(file)
 		for file in sorted(fileList):
 			mbCmdList.append("%s %s" %(mrBayesPath, file))
@@ -325,7 +331,7 @@ if __name__ == "__main__":
 					concat_brlenLinked_ln = extractMargLik("%s/alignments/nexus/%s-%s_brlen-linked.nex.log" %(outputDir,locus1,locus2))
 					gene1_ln = extractMargLik("%s/alignments/nexus/%s.nex.log" %(outputDir,locus1))
 					gene2_ln = extractMargLik("%s/alignments/nexus/%s.nex.log" %(outputDir,locus2))
-					rf = rfDistance("%s/alignments/nexus/%s.nex.con.tre" %(outputDir,locus1), "%s/alignments/nexus/%s.nex.con.tre" %(outputDir,locus2))
+					rf = rfDistance("%s/alignments/nexus/information_content/%s.nex.con.tre" %(outputDir,locus1), "%s/alignments/nexus/information_content/%s.nex.con.tre" %(outputDir,locus2))
 					margLikelihoodDict.update({"%s-%s" %(locus1,locus2) : {"gene1": locus1, "gene2": locus2, "concat_brlenUnlinked_ln": concat_brlenUnlinked_ln, "concat_brlenLinked_ln": concat_brlenLinked_ln, "gene1_ln": gene1_ln, "gene2_ln": gene2_ln, "rf_distance" : rf}})
 					combinedln = float(gene1_ln) + float(gene2_ln)
 					if concat_brlenUnlinked_ln > combinedln or concat_brlenLinked_ln > combinedln:
@@ -361,7 +367,7 @@ if __name__ == "__main__":
 	#	outfile.write("]\n\n")
 	#	outfile.write("var num_genes = %d\n" %(len(ipctDict.keys())))
 
-	logOutput(log, logFile, "All data written to %s/tree_info/genedata.js" % outputDir)
+	#logOutput(log, logFile, "All data written to %s/tree_info/genedata.js" % outputDir)
 
 	# Write HTML
 	writeHTML("%s/results.html" % outputDir, margLikelihoodDict, ipctDict, locusLengthDict)
