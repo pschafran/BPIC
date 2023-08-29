@@ -8,7 +8,7 @@ from Bio import SeqIO
 def checkArgs(commandline):
 	cite = '''
 By: Peter W. Schafran
-Last Updated: 2022 September 12
+Last Updated: 2023 August 28
 https://github.com/pschafran/BPIC
 	'''
 	version = "0.1"
@@ -48,9 +48,10 @@ Advanced
 --mafft-path	Path to MAFFT executable
 --clustal-path	Path to Clustal executable
 --galax-path	Path to Galax executable
+--timeout	Initial length (minutes) to run MrBayes before killing job; increased during run as needed (default: 60)
 '''
 
-	acceptedParameters = ["-i","--input","-f","--format","-a","--aligner","-t","--threads","-o","--output","--force","--CDS","--continue","-h","--help","-v","--version","-c","--cite","--mrbayes-path","--mafft-path","--clustal-path","--galax-path", "--mrbayes-nst", "--mrbayes-rates", "--mrbayes-ngen", "--mrbayes-burninfrac", "--mrbayes-samplefreq", "--mrbayes-nsteps"]
+	acceptedParameters = ["-i","--input","-f","--format","-a","--aligner","-t","--threads","-o","--output","--force","--CDS","--continue","-h","--help","-v","--version","-c","--cite","--mrbayes-path","--mafft-path","--clustal-path","--galax-path", "--mrbayes-nst", "--mrbayes-rates", "--mrbayes-ngen", "--mrbayes-burninfrac", "--mrbayes-samplefreq", "--mrbayes-nsteps","--timeout"]
 
 	# Set default parameters
 	aligner = "mafft"
@@ -73,6 +74,7 @@ Advanced
 	mrBayesSampleFreq = 1000
 	mrBayesPrintFreq = 10000000
 	mrBayesNsteps = 30
+	timeout=30
 
 
 	if "-h" in commandline or "--help" in commandline:
@@ -153,6 +155,8 @@ Advanced
 			mrBayesSampleFreq = commandline[i+1]
 		if parameter == "--mrbayes-nsteps":
 			mrBayesNsteps = commandline[i+1]
+		if parameter == "--timeout":
+			timeout = float(commandline[i+1])
 		if parameter == "--continue":
 			continuePoint = commandline[i+1]
 			if continuePoint not in ["align","mrbayes"]:
@@ -177,15 +181,15 @@ Advanced
 		if log == True:
 			logFile = "%s/%s" %(outputDir,logFile)
 		i += 1
-	parameterDict = {"inputDir" : inputDir, "fileFormat" : fileFormat, "aligner" : aligner, "forceOverwrite" : forceOverwrite, "CDS" : CDS, "continueRun" : continueRun, "continuePoint" : continuePoint, "log" : log, "logFile" : logFile, "outputDir" : outputDir, "threads" : threads, "mrBayesPath" : mrBayesPath, "mafftPath" : mafftPath, "clustalPath" : clustalPath, "galaxPath" : galaxPath, "mrBayesNST" : mrBayesNST, "mrBayesRates" : mrBayesRates, "mrBayesNgen" : mrBayesNgen, "mrBayesBurninFrac" : mrBayesBurninFrac, "mrBayesSampleFreq" : mrBayesSampleFreq, "mrBayesNsteps" : mrBayesNsteps }
+	parameterDict = {"inputDir" : inputDir, "fileFormat" : fileFormat, "aligner" : aligner, "forceOverwrite" : forceOverwrite, "CDS" : CDS, "continueRun" : continueRun, "continuePoint" : continuePoint, "log" : log, "logFile" : logFile, "outputDir" : outputDir, "threads" : threads, "mrBayesPath" : mrBayesPath, "mafftPath" : mafftPath, "clustalPath" : clustalPath, "galaxPath" : galaxPath, "mrBayesNST" : mrBayesNST, "mrBayesRates" : mrBayesRates, "mrBayesNgen" : mrBayesNgen, "mrBayesBurninFrac" : mrBayesBurninFrac, "mrBayesSampleFreq" : mrBayesSampleFreq, "mrBayesNsteps" : mrBayesNsteps, "timeout" : timeout }
 	return parameterDict
 
 def checkDependencies(aligner, mrBayes, mafft, clustal, galax, dependencyDir, log = False, logFile = "null"):
 	mrBayesPath = shutil.which(mrBayes)
 	if mrBayesPath == None:
-		mrBayesPath = shutil.which("mb")
-	if mrBayesPath == None:
 		mrBayesPath = shutil.which("%s/mb" % dependencyDir)
+	if mrBayesPath == None:
+		mrBayesPath = shutil.which("mb")
 	if mrBayesPath == None:
 		logOutput(log, logFile, "ERROR: MrBayes could not be found.")
 		exit(1)
@@ -193,9 +197,9 @@ def checkDependencies(aligner, mrBayes, mafft, clustal, galax, dependencyDir, lo
 
 	galaxPath = shutil.which(galax)
 	if galaxPath == None:
-		galaxPath = shutil.which("galax")
-	if galaxPath == None:
 		galaxPath = shutil.which("%s/galax" % dependencyDir)
+	if galaxPath == None:
+		galaxPath = shutil.which("galax")
 	if galaxPath == None:
 		logOutput(log, logFile, "ERROR: Galax could not be executed.")
 		exit(1)
@@ -203,9 +207,9 @@ def checkDependencies(aligner, mrBayes, mafft, clustal, galax, dependencyDir, lo
 	if aligner == "mafft":
 		mafftPath = shutil.which(mafft)
 		if mafftPath == None:
-			mafftPath = shutil.which("mafft")
-		if mafftPath == None:
 			mafftPath = shutil.which("%s/mafft" % dependencyDir)
+		if mafftPath == None:
+			mafftPath = shutil.which("mafft")
 		if mafftPath == None:
 			logOutput(log, logFile, "ERROR: MAFFT could not be executed.")
 			exit(1)
@@ -214,9 +218,9 @@ def checkDependencies(aligner, mrBayes, mafft, clustal, galax, dependencyDir, lo
 	elif aligner == "clustal":
 		clustalPath = shutil.which(clustal)
 		if clustalPath == None:
-			clustalPath = shutil.which("clustalo")
-		if clustalPath == None:
 			clustalPath = shutil.which("%s/clustalo" % dependencyDir)
+		if clustalPath == None:
+			clustalPath = shutil.which("clustalo")
 		if clustalPath == None:
 			logOutput(log, logFine, "ERROR: Clustal Omega could not be executed.")
 			exit(1)
@@ -236,7 +240,7 @@ def checkFastas(inputDir, fileFormat, log = False, logFile = "null"):
 			locusList = []
 			filename = file.split("/")[-1]
 			taxon = ".".join(filename.split(".")[0:-1])
-			iterator = SeqIO.parse("%s/%s" %(inputDir,file), "fasta")
+			iterator = SeqIO.parse("%s" %(file), "fasta")
 			seqIDs = sorted([record.id for record in iterator])
 			for locus in seqIDs:
 				if locus in locusList:
@@ -279,7 +283,7 @@ def checkFastas(inputDir, fileFormat, log = False, logFile = "null"):
 			taxonList = []
 			filename = file.split("/")[-1]
 			locus = ".".join(filename.split(".")[0:-1])
-			iterator = SeqIO.parse("%s/%s" %(inputDir,file), "fasta")
+			iterator = SeqIO.parse("%s" %(file), "fasta")
 			seqIDs = sorted([record.id for record in iterator])
 			sequenceDict.update({locus : seqIDs})
 			for taxon in seqIDs:
