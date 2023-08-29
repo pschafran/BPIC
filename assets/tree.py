@@ -4,8 +4,10 @@ from ete3 import Tree
 import re
 import time
 import signal
+import os
 
-def mrBayes(cmd, timeout=30):
+def mrBayes(cmd, timeout=60):
+	failed = True
 	file = cmd.split(" ")[-1]
 	cmdList = cmd.split(" ")
 	logFile = open("%s.log" % file, "w")
@@ -13,10 +15,21 @@ def mrBayes(cmd, timeout=30):
 		process = subprocess.run(cmdList, stdout=logFile, stderr=subprocess.PIPE, timeout = timeout*60, shell=False)
 		failed = False
 	#(out, err) = process.communicate() #the stdout and stderr
-	except subprocess.TimeoutExpired:
+	except:
 		failed = True
 	logFile.close()
-	return cmd, failed
+	# Double check the output files to be sure it finished
+	if not os.path.isfile("%s.pstat" % file):
+		failed = True
+	elif os.path.isfile("%s.pstat" % file):
+		failed = False
+	# Test for Mr Bayes completing by looking for marginal likelihood in output
+	try:
+		extractMargLik("%s.log" % file)
+		failed = False
+	except:
+		failed = True
+	return file,failed
 
 def extractMargLik(mbLogFile):
 	linecounter = 1
