@@ -6,7 +6,7 @@ def writeHTML(file, margLikelihoodDict, ipctDict, locusLengthDict):
 <html lang="en">
 	<head>
 		<meta charset="utf-8">
-		<title>D3js chloroplast gene conflict map</title>
+		<title>Gene Conflict Map</title>
         <script src="https://d3js.org/d3.v4.min.js" charset="utf-8"></script>
         <!--
 		<script type="text/javascript" src="genedata.js" charset="utf-8"></script>
