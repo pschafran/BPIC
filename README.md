@@ -43,10 +43,12 @@ conda create -n BPIC -c bioconda -c conda-forge -c etetoolkit mafft clustalo ete
 conda activate BPIC
 ```
 
-The base `BPIC` directory contains an empty directory where you can link dependencies if they are not read directly from the `PATH` variable. In particular, software installed with Conda may not be autodetected by `BPIC`. **Note that galax must be named galax, not galax1 which comes in some distributions.** If you are able to call the program directly in a Terminal, you can do:
+In the base `BPIC` directory make a new directory called `dependencies` where you can link dependencies if they are not read directly from the `PATH` variable. In particular, software installed 
+with Conda may not be autodetected by `BPIC`. **Note that galax must be named galax, not galax1 which comes in some distributions.** If you are able to call the program directly in a Terminal, you can do:
 
 ```  
-cd BPIC/dependencies
+cd BPIC/
+mkdir dependencies && cd dependencies
 ln -s $(which mafft)
 ln -s $(which clustalo)
 ln -s $(which galax)
