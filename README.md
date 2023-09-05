@@ -7,11 +7,12 @@
 #### To Do
 * Add CDS option for coding site partitioning
 * Add options for processing AA seqs
+* Add input options: nexus alignments w/ and w/o MrBayes blocks
 
 ## Overview
 Script for batch processing of homologous loci for up to ~12 taxa to calculate Bayesian phylogenetic information content in the data. Steps:
 
-1. Input data can be a FASTA file for each taxon containing one sequence for each locus, or a FASTA a file for each locus containing one sequence per taxon, or FASTA format alignments. 
+1. Input data can be a FASTA file for each taxon containing one sequence for each locus, or a FASTA a file for each locus containing one sequence per taxon, or FASTA format alignments.
 2. Sequence alignment (via MAFFT or Clustal Omega).
 3. Tree inference and marginal likelihood calculations (via Mr. Bayes)
 4. Analyze information content (via Galax)
@@ -35,15 +36,14 @@ git clone https://github.com/pschafran/BPIC.git
 * MrBayes [https://nbisweden.github.io/MrBayes/download.html](https://nbisweden.github.io/MrBayes/download.html)
 * Galax [https://github.com/plewis/galax](https://github.com/plewis/galax)
 
-In my experience on macOS, using Conda to install MAFFT and Clustal Omega works, MrBayes works best when installed through Homebrew. Installing in a new environment is recommended to avoid conflicts if other conda packages are already installed:
+In my experience on macOS, using Conda to install MAFFT and Clustal Omega works, MrBayes works best when installed through Homebrew, but installation by any method should work. Linking the correct executables to the `BPIC/dependencies/` folder or on the command line may be necessary as described below. Installing in a new environment is recommended to avoid conflicts if other versions of these programs are already installed:
 
 ```
-conda create -n BPIC -c bioconda -c conda-forge -c etetoolkit mafft clustalo ete3 ete_toolchain python=3.6
+conda create -n BPIC -c bioconda -c conda-forge -c etetoolkit mafft clustalo ete3 ete_toolchain biopython mrbayes python=3.6
 conda activate BPIC
-pip install biopython
 ```
 
-The base `BPIC` directory contains an empty directory where you can link dependencies if they are not read directly from the `PATH` variable. In particular, software installed with Conda may not be autodetected by `BPIC`. If you are able to call the program directly in a Terminal, you can do:
+The base `BPIC` directory contains an empty directory where you can link dependencies if they are not read directly from the `PATH` variable. In particular, software installed with Conda may not be autodetected by `BPIC`. **Note that galax must be named galax, not galax1 which comes in some distributions.** If you are able to call the program directly in a Terminal, you can do:
 
 ```  
 cd BPIC/dependencies
@@ -66,12 +66,12 @@ BPIC.py -i input_files -o output -f taxon --mafft-path /Users/peter/opt/minicond
 
 ```
 
-**NOTE ON CALLING DEPENDENCIES** 
+**NOTE ON CALLING DEPENDENCIES**
 
 The order of priority is: command line > linked in `BPIC/dependencies` > autodetected from the `PATH` shell vairable. I.e. if you specify one version of a program on the command line, it will ignore the versions of that program in other locations. And if nothing is specified on the command line, it will use the version linked in `BPIC/dependencies` over one found in the `PATH`.  
 
 ## Test Run
-Once dependencies are installed and/or linked, you can test everything it working with the files included in the `test` directory. It takes about 5 minutes to run with 24 threads on a desktop computer, or about 1 hour with 4 threads on a MacBook Air.
+Once dependencies are installed and/or linked, you can test everything it working with the files included in the `test` directory. It takes about 10 minutes to run with 24 threads on a desktop computer, or about 15 minutes with 4 threads on a MacBook Air.
 ```
 cd BPIC/test
 ../BPIC.py -i . -o output -t 4 -f taxon
@@ -160,7 +160,7 @@ Advanced
 --clustal-path	Path to Clustal executable
 --galax-path	Path to Galax executable
 --timeout	Minutes to run MrBayes analyses before killing process and restarting
---continue	Resume a previously interrupted run. Must specify stage to resume (`alignment` or `mrbayes`) 
+--continue	Resume a previously interrupted run. Must specify stage to resume (`alignment` or `mrbayes`)
 ```
 
 ## Run Time
@@ -180,16 +180,16 @@ In the output directory, you will see a file called `results.html`, and three di
 ```
 
 
-1. `sequence_files` contains the sequence files either directly as input (if pre-formatted as loci or alignments) or after sorting loci if input files are formatted as taxa. 
+1. `sequence_files` contains the sequence files either directly as input (if pre-formatted as loci or alignments) or after sorting loci if input files are formatted as taxa.
 2. `alignments` contains alignments of the sequence files either produced by the script or copied from input if they were already aligned. A sub-directory of `alignments` called `nexus` contains the alignments converted to nexus format (with MrBayes command blocks) and all MrBayes output files. The sub-directory `information_context` contains nexus alignments and MrBayes output files used for calculating information content of trees. **WARNING:** The `nexus` directory can contain thousands of files, recommend only navigating here in Terminal.
 3. `tree_info` contains input and output files for Galax, and a table summarizing marginal likelihoods for each pair of loci.
-4. `results.html` graphically displays all infomation, showing links between genes with potentially conflicting topologies, determined by concatenated analysis having a higher marginal likelihood than sum of separate analyses. Information content of each gene is indicated by color, and shown interactively when the mouse cursor hovers over each gene. 
+4. `results.html` graphically displays all infomation, showing links between genes with potentially conflicting topologies, determined by concatenated analysis having a higher marginal likelihood than sum of separate analyses. Information content of each gene is indicated by color, and shown interactively when the mouse cursor hovers over each gene.
 
 
 ## MrBayes Bug Workaround
-A bug in MrBayes causes some analyses of **concatenated genes with unlinked branch lengths** to get stuck and never finish. To work around this, this script sets a maximum run time for each MrBayes analysis (30 minutes by default, or user specified with `--timeout`). When an analysis times out, it is rerun until it finishes successfully, each time using a new seed/swapseed value and doubling the timeout length (to avoid cutting off jobs that just need more time to finish). Usually this works without requiring any user input, but in case it still fails to finish, the script can be manually stopped (ctrl+c, etc.), and restarted by adding `--continue mrbayes` to the original command line. This should allow the script to finish normally. 
+A bug in MrBayes causes some analyses of **concatenated genes with unlinked branch lengths** to get stuck and never finish. To work around this, this script sets a maximum run time for each MrBayes analysis (30 minutes by default, or user specified with `--timeout`). When an analysis times out, it is rerun until it finishes successfully, each time using a new seed/swapseed value and doubling the timeout length (to avoid cutting off jobs that just need more time to finish). Usually this works without requiring any user input, but in case it still fails to finish, the script can be manually stopped (ctrl+c, etc.), and restarted by adding `--continue mrbayes` to the original command line. This should allow the script to finish normally.
 
-If the script fails with errors occurring during the `extractMargLik()` function, it is probably caused by unfinished MrBayes runs still sneaking past my checks. 
+If the script fails with errors occurring during the `extractMargLik()` function, it is probably caused by unfinished MrBayes runs still sneaking past my checks.
 
 ## BEAGLE
 DO NOT USE! It causes MrBayes analyses to fail. In case BEAGLE was installed along with MrBayes, all the nexus files contain a `set usebeagle=no` line which should prevent any issues. But if you are troubleshooting problems, double check this.  
